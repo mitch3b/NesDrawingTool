@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body>
+  <div class="content">
+
+    <h1>Nes Drawing Tool</h1>
+
+    <!-- Options  -->
+    <div class="options-wrapper">
+      <div class="option">
+        <!-- Color Table -->
+        <h3>Color Options</h3>
+        <table class="colortable">
+        <tbody>
+          <tr>
+            <td style="color:white; background:rgb(84,84,84);"></td>
+            <td style="color:white; background:rgb(0,3,116);"></td>
+            <td style="color:white; background:rgb(8,16,144);"></td>
+            <td style="color:white; background:rgb(48,0,136);"></td>
+            <td style="color:white; background:rgb(68,0, 100);"></td>
+            <td style="color:white; background:rgb(92,0,48);"></td>
+            <td style="color:white; background:rgb(84,4,0);"></td>
+            <td style="color:white; background:rgb(60,24,0);"></td>
+            <td style="color:white; background:rgb(32,42,0);"></td>
+            <td style="color:white; background:rgb(8,58,0);"></td>
+            <td style="color:white; background:rgb(0,64,0);"></td>
+            <td style="color:white; background:rgb(0,60,0);"></td>
+            <td style="color:white; background:rgb(0,50,60);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+          </tr>
+          <tr>
+            <td style="color:white; background:rgb(152,150,152);"></td>
+            <td style="color:white; background:rgb(48,50,236);"></td>
+            <td style="color:white; background:rgb(92,30,228);"></td>
+            <td style="color:white; background:rgb(136,20,176);"></td>
+            <td style="color:white; background:rgb(160,20,100);"></td>
+            <td style="color:white; background:rgb(152,34,32);"></td>
+            <td style="color:white; background:rgb(120,60,0);"></td>
+            <td style="color:white; background:rgb(84,90,0);"></td>
+            <td style="color:white; background:rgb(40,114,0);"></td>
+            <td style="color:white; background:rgb(8,124,0);"></td>
+            <td style="color:white; background:rgb(0,118,40);"></td>
+            <td style="color:white; background:rgb(0,102,120);"></td>
+            <td style="color:white; background:rgb(0,136,136);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+          </tr>
+          <tr>
+            <td style="color:white; background:rgb(236,238,236);"></td>
+            <td style="color:white; background:rgb(76,154,236);"></td>
+            <td style="color:white; background:rgb(120,124,236);"></td>
+            <td style="color:white; background:rgb(176,98,236);"></td>
+            <td style="color:white; background:rgb(228,84,236);"></td>
+            <td style="color:white; background:rgb(236,88,180);"></td>
+            <td style="color:white; background:rgb(236,106,100);"></td>
+            <td style="color:white; background:rgb(212,136,32);"></td>
+            <td style="color:white; background:rgb(160,170,0);"></td>
+            <td style="color:white; background:rgb(116,196,0);"></td>
+            <td style="color:white; background:rgb(76,208,32);"></td>
+            <td style="color:white; background:rgb(56,204,108);"></td>
+            <td style="color:white; background:rgb(56,180,204);"></td>
+            <td style="color:white; background:rgb(60,60,60);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+          </tr>
+          <tr>
+
+            <td style="color:white; background:rgb(236,238,236);"></td>
+            <td style="color:white; background:rgb(168,204,236);"></td>
+            <td style="color:white; background:rgb(188,188,236 );"></td>
+            <td style="color:white; background:rgb(212,178,236);"></td>
+            <td style="color:white; background:rgb(236,174,236);"></td>
+            <td style="color:white; background:rgb(236,174,212);"></td>
+            <td style="color:white; background:rgb(236,180,176);"></td>
+            <td style="color:white; background:rgb(228,196,144);"></td>
+            <td style="color:white; background:rgb(204,210,120);"></td>
+            <td style="color:white; background:rgb(180,222,120);"></td>
+            <td style="color:white; background:rgb(168,226,144);"></td>
+            <td style="color:white; background:rgb(152,226,180);"></td>
+            <td style="color:white; background:rgb(160,214,228);"></td>
+            <td style="color:white; background:rgb(160,162,160);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+            <td style="color:white; background:rgb(0,0,0);"></td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+
+      <div class="option">
+        <!-- Color Table -->
+        <h3>Pallette</h3>
+        <table class="palletteTable">
+        <tbody>
+          <tr>
+            <td id="p0c0" style="color:white; background:rgb(70,150,236);"></td>
+            <td id="p0c1" style="color:white; background:rgb(176,98,236);"></td>
+            <td id="p0c2" style="color:white; background:rgb(76,208,32);"></td>
+            <td id="p0c3" style="color:white; background:rgb(0,0,0);"></td>
+            <td class="palletteBuffer"></td>
+            <td id="p1c0" style="color:white; background:rgb(152,34,32);"></td>
+            <td id="p1c1" style="color:white; background:rgb(0,3,116);"></td>
+            <td id="p1c2" style="color:white; background:rgb(8,16,144);"></td>
+            <td id="p1c3" style="color:white; background:rgb(48,0,136);"></td>
+            <td class="palletteBuffer"></td>
+            <td id="p2c0" style="color:white; background:rgb(68,0, 100);"></td>
+            <td id="p2c1" style="color:white; background:rgb(92,0,48);"></td>
+            <td id="p2c2" style="color:white; background:rgb(84,4,0);"></td>
+            <td id="p2c3" style="color:white; background:rgb(60,24,0);"></td>
+            <td class="palletteBuffer"></td>
+            <td id="p3c0" style="color:white; background:rgb(32,42,0);"></td>
+            <td id="p3c1" style="color:white; background:rgb(8,58,0);"></td>
+            <td id="p3c2" style="color:white; background:rgb(0,64,0);"></td>
+            <td id="p3c3" style="color:white; background:rgb(0,60,0);"></td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+
+      <div class="option">
+        <!-- Current Color -->
+        <div id="chosen-color"></div>
+      </div>
+
+      <div class="option">
+        <h3>Options</h3>
+        <!-- Clear Button -->
+        <div class="button-wrapper">
+          <button id="clear">Clear</button>
+          <!--button id="addColumn">+ col</button>
+          <button id="removeColumn">- col</button>
+          <button id="addRow">+ row</button>
+          <button id="removeRow">- row</button-->
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="artboard">
+      <h3>Canvas</h3>
+      <table id="artboard">
+      </table>
+    </div>
+  </div>
+</body>
+<script type="text/javascript" src="code.js"></script>
+<script>
+  drawTable(32, 32);
+</script>
+</html>
