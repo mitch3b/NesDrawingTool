@@ -37,10 +37,17 @@ function drawTable(height, width) {
     addRowSized(width);
     addRowSized(width);
   }
+  
+  resetColoring();
 }
 
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
+  for(var i = 0 ; i < 4 ; i++) {
+    theColor = $('#p' + currentPallette + 'c' + i).css('background-color');
+    $('.p' + currentPallette + 'c' + i).css('background-color', theColor);
+  }
+
   $( '#artboard td' ).click(function() {
     $(this).removeClass();
     $(this).addClass('p' + currentPallette + 'c' + currentColor);
@@ -102,6 +109,14 @@ $('.palletteTable td').click(function(){
   setColor(theColor);
 });
 
+$("#save").click(function() {
+  alert("not implemented yet");
+});
+
+$("#load").click(function() {
+  alert("not implemented yet");
+});
+
 // Clear all cells
 $("#clear").click(function() {
   $('#artboard td').css('background-color', 'transparent');
@@ -157,6 +172,7 @@ function addRowSized(width) {
 
   for (let colNum = 0 ; colNum < width ; colNum++) {
     let th = document.createElement("td");
+    th.classList.add("p0c3");
     row.appendChild(th);
   }
 }
