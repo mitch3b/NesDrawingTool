@@ -105,7 +105,7 @@
         </span>
         <br>
         </div>
-        <table class="palletteTable">
+        <table id="palletteTable" class="palletteTable">
         <tbody>
           <tr>
             <td id="p0c0" style="color:white; background:rgb(70,150,236);"></td>
@@ -142,7 +142,7 @@
         <!-- Clear Button -->
         <div class="button-wrapper">
           <button id="save">Save</button>
-          <button id="load">Load</button>
+          Load from file: <input type="file" id="input-file">
           <!--button id="addColumn">+ col</button>
           <button id="removeColumn">- col</button>
           <button id="addRow">+ row</button>
@@ -162,6 +162,5 @@
 <script type="text/javascript" src="code.js"></script>
 <script>
   drawTable(32, 32);
-  document.getElementById("p0c0").click();
 </script>
 </html>

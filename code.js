@@ -37,15 +37,18 @@ function drawTable(height, width) {
     addRowSized(width);
     addRowSized(width);
   }
-  
+
   resetColoring();
+  document.getElementById("p0c0").click();
 }
 
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
-  for(var i = 0 ; i < 4 ; i++) {
-    theColor = $('#p' + currentPallette + 'c' + i).css('background-color');
-    $('.p' + currentPallette + 'c' + i).css('background-color', theColor);
+  for(var j = 0 ; j < 4 ; j++) {
+    for(var i = 0 ; i < 4 ; i++) {
+      theColor = $('#p' + j + 'c' + i).css('background-color');
+      $('.p' + j + 'c' + i).css('background-color', theColor);
+    }
   }
 
   $( '#artboard td' ).click(function() {
@@ -109,13 +112,86 @@ $('.palletteTable td').click(function(){
   setColor(theColor);
 });
 
+document.getElementById('input-file').addEventListener('change', getFile)
+
+function getFile(event) {
+	const input = event.target
+  if ('files' in input && input.files.length > 0) {
+	  placeFileContent(input.files[0]);
+  }
+}
+
+function placeFileContent(file) {
+	readFileContent(file).then(content => {
+    let vals = content.split(delimiter);
+
+    let i = 0;
+    var palletteTable = document.getElementById("palletteTable");
+    for (let row of palletteTable.rows) {
+      for(let cell of row.cells) {
+         cell.style.backgroundColor = vals[i];
+         i++;
+      }
+    }
+
+    var artboardTable = document.getElementById("artboard");
+    for (let row of artboardTable.rows) {
+      for(let cell of row.cells) {
+        cell.classList.remove(...cell.classList);
+        cell.classList.add(vals[i]);
+        i++;
+      }
+    }
+    
+    document.getElementById("p0c0").click();
+    resetColoring();
+  }).catch(error => console.log(error))
+}
+
+let delimiter = ";"
+function readFileContent(file) {
+	const reader = new FileReader()
+  return new Promise((resolve, reject) => {
+    reader.onload = event => resolve(event.target.result)
+    reader.onerror = error => reject(error)
+    reader.readAsText(file)
+  })
+}
+
 $("#save").click(function() {
-  alert("not implemented yet");
+  var content = getStateAsString();
+  downloadToFile(content, "NesDrawingToolState.txt", "text/plain")
 });
 
-$("#load").click(function() {
-  alert("not implemented yet");
-});
+function getStateAsString() {
+  var result = "";
+  var palletteTable = document.getElementById("palletteTable");
+  for (let row of palletteTable.rows) {
+    for(let cell of row.cells) {
+       result += cell.style.backgroundColor + delimiter; // your code below
+    }
+  }
+
+  var artboardTable = document.getElementById("artboard");
+  for (let row of artboardTable.rows) {
+    for(let cell of row.cells) {
+       result += cell.classList[0] + delimiter; // your code below
+    }
+  }
+
+  return result;
+}
+
+function downloadToFile(content, filename, contentType) {
+  const a = document.createElement('a');
+  const file = new Blob([content], {type: contentType});
+
+  a.href= URL.createObjectURL(file);
+  a.download = filename;
+  a.click();
+
+	URL.revokeObjectURL(a.href);
+}
 
 // Clear all cells
 $("#clear").click(function() {
