@@ -61,16 +61,10 @@ function resetColoring() {
 }
 
 // Set chosen color and call cell color function
-function setColor(color){
+function setChosenColor(color){
   $('#chosen-color').css('background-color', color);
 
   resetColoring();
-};
-
-// Set cell color
-function colorCell(cell, color){
-  console.log("colorCell...");
-  cell.css("background-color", color);
 };
 
 // When a cell on the color table is clicked
@@ -107,9 +101,7 @@ $('.palletteTable td').click(function(){
     currentPallette = newPalletteNumber;
   }
 
-  console.log("current color: " + currentColor);
-  console.log("current pallette: " + currentPallette);
-  setColor(theColor);
+  setChosenColor(theColor);
 });
 
 document.getElementById('input-file').addEventListener('change', getFile)
@@ -142,7 +134,7 @@ function placeFileContent(file) {
         i++;
       }
     }
-    
+
     document.getElementById("p0c0").click();
     resetColoring();
   }).catch(error => console.log(error))
@@ -270,7 +262,5 @@ $("#canvasZoomIn").click(function() {
   let width = document.getElementById('artboard').rows[0].width;
   $( '#artboard td' ).each(function(){
     let newSize = $(this).width()*1.1;
-    //$(this).css("width", newSize);
-    //$(this).css("height", newSize);
   });
 });
