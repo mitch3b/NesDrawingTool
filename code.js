@@ -1,8 +1,10 @@
 var pressedKeys = {};
+const SHIFT_KEYCODE = 16;
 var currentPallette = 0;
 var currentColor = 0;
 var selectedRow = 0;
 var selectedColumn = 0;
+
 
 window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; }
 window.onkeydown = function(e) {
@@ -56,15 +58,20 @@ function resetColoring() {
   reselectTile();
 
   $( '#artboard td' ).click(function() {
+    var row = $(this).closest("tr").index();
+    var column = $(this).closest("td").index();
+    selectTile(findTopLeftCorner(row), findTopLeftCorner(column));
+
+    if(document.getElementById("artboardLock").checked || pressedKeys[SHIFT_KEYCODE]) {
+        console.log("canvas locked. Not coloring pixel...");
+        return;
+    }
+
     $(this).removeClass();
     $(this).addClass('p' + currentPallette + 'c' + currentColor);
 
     theColor = $('#chosen-color').css('background-color');
     $(this).css('background-color', theColor);
-
-    var row = $(this).closest("tr").index();
-    var column = $(this).closest("td").index();
-    selectTile(findTopLeftCorner(row), findTopLeftCorner(column));
   });
 }
 
