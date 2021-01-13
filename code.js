@@ -18,15 +18,15 @@ window.onkeydown = function(e) {
     case 51: switchCurrentPalletteColor(2); break; // 3
     case 52: switchCurrentPalletteColor(3); break; // 4
 
-    case 65: selectTile(selectedRow, getCanvasNumber(selectedColumn - 4)); break; // a - left
-    case 87: selectTile(getCanvasNumber(selectedRow - 4), selectedColumn); break; // w - up
-    case 68: selectTile(selectedRow, getCanvasNumber(selectedColumn + 4)); break; // d - right
-    case 83: selectTile(getCanvasNumber(selectedRow + 4), selectedColumn); break; // s - down
+    case 65: selectTile(selectedRow, getTilesetNumber(selectedColumn - 4)); break; // a - left
+    case 87: selectTile(getTilesetNumber(selectedRow - 4), selectedColumn); break; // w - up
+    case 68: selectTile(selectedRow, getTilesetNumber(selectedColumn + 4)); break; // d - right
+    case 83: selectTile(getTilesetNumber(selectedRow + 4), selectedColumn); break; // s - down
   }
 }
 
 // Makes sure the number is between 0 and 31
-function getCanvasNumber(number) {
+function getTilesetNumber(number) {
   return (number + 32) % 32;
 }
 
@@ -44,7 +44,7 @@ function switchCurrentPalletteColor(number) {
 
 //Expect only multiples of 4
 function drawTable(height, width) {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
   for (let rowNum = 0 ; rowNum < (height/4) ; rowNum++) {
     addRowSized(width);
     addRowSized(width);
@@ -67,13 +67,13 @@ function resetColoring() {
 
   reselectTile();
 
-  $( '#artboard td' ).click(function() {
+  $( '#tilesetTable td' ).click(function() {
     var row = $(this).closest("tr").index();
     var column = $(this).closest("td").index();
     selectTile(findTopLeftCorner(row), findTopLeftCorner(column));
 
-    if(document.getElementById("artboardLock").checked || pressedKeys[SHIFT_KEYCODE]) {
-        console.log("canvas locked. Not coloring pixel...");
+    if(document.getElementById("tilesetTableLock").checked || pressedKeys[SHIFT_KEYCODE]) {
+        console.log("tileset locked. Not coloring pixel...");
         return;
     }
 
@@ -157,8 +157,8 @@ function placeFileContent(file) {
       }
     }
 
-    var artboardTable = document.getElementById("artboard");
-    for (let row of artboardTable.rows) {
+    var tilesetTableTable = document.getElementById("tilesetTable");
+    for (let row of tilesetTableTable.rows) {
       for(let cell of row.cells) {
         cell.classList.remove(...cell.classList);
         cell.classList.add(vals[i]);
@@ -195,8 +195,8 @@ function getStateAsString() {
     }
   }
 
-  var artboardTable = document.getElementById("artboard");
-  for (let row of artboardTable.rows) {
+  var tilesetTableTable = document.getElementById("tilesetTable");
+  for (let row of tilesetTableTable.rows) {
     for(let cell of row.cells) {
        result += cell.classList[0] + delimiter; // your code below
     }
@@ -218,12 +218,12 @@ function downloadToFile(content, filename, contentType) {
 
 // Clear all cells
 $("#clear").click(function() {
-  $('#artboard td').css('background-color', 'transparent');
-  $('#artboard td').removeClass();
+  $('#tilesetTable td').css('background-color', 'transparent');
+  $('#tilesetTable td').removeClass();
 });
 
 $("#addColumn").click(function() {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
 
   for (var r = 0; r < table.rows.length; r++){
     for (var i = 0 ; i < 4 ; i++) {
@@ -236,7 +236,7 @@ $("#addColumn").click(function() {
 });
 
 $("#removeColumn").click(function() {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
 
   if(table.rows.length > 1 && table.rows[0].cells.length > 4 ) {
     for (var r = 0; r < table.rows.length; r++){
@@ -260,13 +260,13 @@ $("#addRow").click(function() {
 });
 
 function addRow() {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
 
   addRowSized(table.rows[0].cells.length);
 }
 
 function addRowSized(width, classToAdd) {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
   let row = table.insertRow();
 
   for (let colNum = 0 ; colNum < width ; colNum++) {
@@ -292,7 +292,7 @@ function reselectTile() {
 let highlightColor = "blue";
 let highlightStyle = "1px solid blue";
 function selectTile(row, column) {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
 
   for(var i = 0 ; i < 4 ; i++) {
     table.rows[selectedRow].cells[selectedColumn + i].classList.remove('highlight-border-top');
@@ -312,10 +312,12 @@ function selectTile(row, column) {
     table.rows[selectedRow + i].cells[selectedColumn].classList.add('highlight-border-left');
     table.rows[selectedRow + i].cells[selectedColumn + 3].classList.add('highlight-border-right');
   }
+
+
 }
 
 $("#removeRow").click(function() {
-  let table = document.getElementById('artboard');
+  let table = document.getElementById('tilesetTable');
 
   if(table.rows.length > 4) {
     table.deleteRow(-1);
@@ -328,17 +330,17 @@ $("#removeRow").click(function() {
 });
 
 $("#canvasZoomIn").click(function() {
-  let width = document.getElementById('artboard').rows[0].width;
-  $( '#artboard td' ).each(function(){
+  let width = document.getElementById('tilesetTable').rows[0].width;
+  $( '#tilesetTable td' ).each(function(){
     let newSize = $(this).width()*1.1;
   });
 });
 
 $('input:checkbox').change(function(){
   if ($(this).is(':checked')) {
-    $( '#artboard td' ).css('border-width', 1);
+    $( '#tilesetTable td' ).css('border-width', 1);
   }
   else {
-    $( '#artboard td' ).css('border-width', 0);
+    $( '#tilesetTable td' ).css('border-width', 0);
   }
 });

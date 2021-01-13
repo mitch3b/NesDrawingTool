@@ -36,16 +36,16 @@ button {
   padding: 10px;
 }
 
-.colortable td, #artboard td, .palletteTable td {
+.colortable td, #tilesetTable td, .palletteTable td {
   border: 1px solid #e5e5e5;
   width: 20px;
   height: 20px;
   padding: 0;
 }
 
-#artboard { border-collapse: collapse; }
+#tilesetTable { border-collapse: collapse; }
 
-#artboard {
+#tilesetTable {
   clear: both;
   background-color: #ffffff;
   margin: 30px 0;
