@@ -50,15 +50,31 @@ button {
   clear: both;
   background-color: #ffffff;
   margin: 30px 0;
-  border: 3px solid #f00;
+  border: 2px solid #f00;
 }
 
 #artboard tr:nth-of-type(4n) td {
-  border-bottom: 3px solid #f00;
+  border-bottom: 2px solid #f00;
 }
 
 #artboard tr td:nth-child(4n) {
-  border-right: 3px solid #f00;
+  border-right: 2px solid #f00;
+}
+
+.highlight-border-top {
+  border-top: solid blue !important;
+}
+
+.highlight-border-bottom {
+  border-bottom: solid blue !important;
+}
+
+.highlight-border-right {
+  border-right: solid blue !important;
+}
+
+.highlight-border-left {
+  border-left: solid blue !important;
 }
 
 .palletteBuffer  {

@@ -1,6 +1,8 @@
 var pressedKeys = {};
 var currentPallette = 0;
 var currentColor = 0;
+var selectedRow = 0;
+var selectedColumn = 0;
 
 window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; }
 window.onkeydown = function(e) {
@@ -51,13 +53,23 @@ function resetColoring() {
     }
   }
 
+  reselectTile();
+
   $( '#artboard td' ).click(function() {
     $(this).removeClass();
     $(this).addClass('p' + currentPallette + 'c' + currentColor);
 
     theColor = $('#chosen-color').css('background-color');
     $(this).css('background-color', theColor);
+
+    var row = $(this).closest("tr").index();
+    var column = $(this).closest("td").index();
+    selectTile(findTopLeftCorner(row), findTopLeftCorner(column));
   });
+}
+
+function findTopLeftCorner(number) {
+  return 4*Math.floor(number/4);
 }
 
 // Set chosen color and call cell color function
@@ -242,6 +254,35 @@ function addRowSized(width) {
     let th = document.createElement("td");
     th.classList.add("p0c3");
     row.appendChild(th);
+  }
+}
+
+function reselectTile() {
+  selectTile(selectedRow, selectedColumn);
+}
+
+let highlightColor = "blue";
+let highlightStyle = "1px solid blue";
+function selectTile(row, column) {
+  let table = document.getElementById('artboard');
+
+  for(var i = 0 ; i < 4 ; i++) {
+    table.rows[selectedRow].cells[selectedColumn + i].classList.remove('highlight-border-top');
+    table.rows[selectedRow + 3].cells[selectedColumn + i].classList.remove('highlight-border-bottom');
+
+    table.rows[selectedRow + i].cells[selectedColumn].classList.remove('highlight-border-left');
+    table.rows[selectedRow + i].cells[selectedColumn + 3].classList.remove('highlight-border-right');
+  }
+
+  selectedRow = row;
+  selectedColumn = column;
+
+  for(var i = 0 ; i < 4 ; i++) {
+    table.rows[selectedRow].cells[selectedColumn + i].classList.add('highlight-border-top');
+    table.rows[selectedRow + 3].cells[selectedColumn + i].classList.add('highlight-border-bottom');
+
+    table.rows[selectedRow + i].cells[selectedColumn].classList.add('highlight-border-left');
+    table.rows[selectedRow + i].cells[selectedColumn + 3].classList.add('highlight-border-right');
   }
 }
 
