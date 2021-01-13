@@ -17,7 +17,17 @@ window.onkeydown = function(e) {
     case 50: switchCurrentPalletteColor(1); break; // 2
     case 51: switchCurrentPalletteColor(2); break; // 3
     case 52: switchCurrentPalletteColor(3); break; // 4
+
+    case 65: selectTile(selectedRow, getCanvasNumber(selectedColumn - 4)); break; // a - left
+    case 87: selectTile(getCanvasNumber(selectedRow - 4), selectedColumn); break; // w - up
+    case 68: selectTile(selectedRow, getCanvasNumber(selectedColumn + 4)); break; // d - right
+    case 83: selectTile(getCanvasNumber(selectedRow + 4), selectedColumn); break; // s - down
   }
+}
+
+// Makes sure the number is between 0 and 31
+function getCanvasNumber(number) {
+  return (number + 32) % 32;
 }
 
 function switchCurrentPallette(number) {
