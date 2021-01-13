@@ -27,7 +27,6 @@ li {
   width: 100px;
 }
 
-
 button {
   width: 117px;
   height: 50px;
@@ -53,12 +52,12 @@ button {
   border: 2px solid #f00;
 }
 
-#artboard tr:nth-of-type(4n) td {
-  border-bottom: 2px solid #f00;
+.tile-end-bottom {
+  border-bottom: 2px solid red !important;
 }
 
-#artboard tr td:nth-child(4n) {
-  border-right: 2px solid #f00;
+.tile-end-right {
+  border-right: 2px solid red !important;
 }
 
 .highlight-border-top {

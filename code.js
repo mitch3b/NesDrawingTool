@@ -39,7 +39,7 @@ function drawTable(height, width) {
     addRowSized(width);
     addRowSized(width);
     addRowSized(width);
-    addRowSized(width);
+    addRowSized(width, 'tile-end-bottom');
   }
 
   resetColoring();
@@ -67,7 +67,9 @@ function resetColoring() {
         return;
     }
 
-    $(this).removeClass();
+    $(this).removeClass(function (index, css) {
+       return (css.match (/p[0-9]c[0-9]/g) || []).join(' ');
+    });
     $(this).addClass('p' + currentPallette + 'c' + currentColor);
 
     theColor = $('#chosen-color').css('background-color');
@@ -253,13 +255,22 @@ function addRow() {
   addRowSized(table.rows[0].cells.length);
 }
 
-function addRowSized(width) {
+function addRowSized(width, classToAdd) {
   let table = document.getElementById('artboard');
   let row = table.insertRow();
 
   for (let colNum = 0 ; colNum < width ; colNum++) {
     let th = document.createElement("td");
     th.classList.add("p0c3");
+
+    if(classToAdd !== undefined) {
+      th.classList.add(classToAdd);
+    }
+
+    if(colNum % 4 == 3) {
+      th.classList.add('tile-end-right')
+    }
+
     row.appendChild(th);
   }
 }
@@ -311,4 +322,13 @@ $("#canvasZoomIn").click(function() {
   $( '#artboard td' ).each(function(){
     let newSize = $(this).width()*1.1;
   });
+});
+
+$('input:checkbox').change(function(){
+  if ($(this).is(':checked')) {
+    $( '#artboard td' ).css('border-width', 1);
+  }
+  else {
+    $( '#artboard td' ).css('border-width', 0);
+  }
 });
