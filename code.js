@@ -43,17 +43,37 @@ function switchCurrentPalletteColor(number) {
 }
 
 //Expect only multiples of 4
-function drawTable(height, width) {
-  let table = document.getElementById('tilesetTable');
+function drawTable(height, width, table) {
   for (let rowNum = 0 ; rowNum < (height/4) ; rowNum++) {
-    addRowSized(width);
-    addRowSized(width);
-    addRowSized(width);
-    addRowSized(width, 'tile-end-bottom');
+    addRowSized(table, width);
+    addRowSized(table, width);
+    addRowSized(table, width);
+    addRowSized(table, width, 'tile-end-bottom');
   }
+}
 
-  resetColoring();
-  document.getElementById("p0c0").click();
+function drawTilesetTable() {
+  let tilesetTable = document.getElementById('tilesetTable');
+  drawTable(32, 32, tilesetTable);
+
+  //Set default color
+  $('#tilesetTable td').addClass("p0c3");
+}
+
+function drawScreenTable() {
+  let fullScreenTable = document.getElementById('fullScreenTable');
+  drawTable(60, 64, fullScreenTable);
+}
+
+// Better ways to do this but good enough for now til load/save is better
+function setDefaultScreen() {
+  let fullScreenTable = document.getElementById('fullScreenTable');
+
+  for(var i = 0 ; i < 16 ; i++) {
+    for(var j = 0 ; j < 15 ; j++) {
+      fullScreenTable.rows[4*j].cells[4*i].click();
+    }
+  }
 }
 
 // If new td's were created, need to make sure they have listeniners
@@ -66,6 +86,26 @@ function resetColoring() {
   }
 
   reselectTile();
+
+  $( '#fullScreenTable td' ).click(function() {
+    var row = $(this).closest("tr").index();
+    var column = $(this).closest("td").index();
+    row = findTopLeftCorner(row);
+    column = findTopLeftCorner(column);
+
+    let tilesetTable = document.getElementById('tilesetTable');
+    let fullScreenTable = document.getElementById('fullScreenTable');
+
+    for(var i = 0 ; i < 4 ; i++) {
+      for(var j = 0 ; j < 4 ; j++) {
+        fullScreenTable.rows[row + i].cells[column + j].style.backgroundColor
+          = tilesetTable.rows[selectedRow + i].cells[selectedColumn + j].style.backgroundColor;
+
+        fullScreenTable.rows[row + i].cells[column + j].classList
+          .add(getTileClassName(selectedRow + i, selectedColumn + j));
+      }
+    }
+  });
 
   $( '#tilesetTable td' ).click(function() {
     var row = $(this).closest("tr").index();
@@ -84,7 +124,13 @@ function resetColoring() {
 
     theColor = $('#chosen-color').css('background-color');
     $(this).css('background-color', theColor);
+
+    $('.' + getTileClassName(row, column)).css('background-color', theColor);
   });
+}
+
+function getTileClassName(row, column) {
+  return 'tile-r' + row + 'c' + column;
 }
 
 function findTopLeftCorner(number) {
@@ -119,13 +165,19 @@ $('.palletteTable td').click(function(){
   currentColor = $(this)[0].id.slice(-1);
   let newPalletteNumber = parseInt($(this)[0].id.charAt(1));
 
-  if(currentPallette != parseInt($(this)[0].id.charAt(1))) {
+  if(currentPallette != newPalletteNumber) {
+    //Update tilesetTable
     for(var i = 0 ; i < 4 ; i++) {
       colorToSet = $('#p' + newPalletteNumber + 'c' + i).css('background-color');
       $('.p' + currentPallette + 'c' + i).each(function(){
         $(this).css("background-color", colorToSet);
         $(this).removeClass();
         $(this).addClass('p' + newPalletteNumber + 'c' + i);
+
+        //Update screen
+        var row = $(this).closest("tr").index();
+        var column = $(this).closest("td").index();
+        $('.' + getTileClassName(row, column)).css('background-color', colorToSet);
       });
     }
 
@@ -262,16 +314,14 @@ $("#addRow").click(function() {
 function addRow() {
   let table = document.getElementById('tilesetTable');
 
-  addRowSized(table.rows[0].cells.length);
+  addRowSized(table, table.rows[0].cells.length);
 }
 
-function addRowSized(width, classToAdd) {
-  let table = document.getElementById('tilesetTable');
+function addRowSized(table, width, classToAdd) {
   let row = table.insertRow();
 
   for (let colNum = 0 ; colNum < width ; colNum++) {
     let th = document.createElement("td");
-    th.classList.add("p0c3");
 
     if(classToAdd !== undefined) {
       th.classList.add(classToAdd);
@@ -336,11 +386,21 @@ $("#canvasZoomIn").click(function() {
   });
 });
 
-$('input:checkbox').change(function(){
+$('#tilesetTableShowGridLines').change(function(){
   if ($(this).is(':checked')) {
     $( '#tilesetTable td' ).css('border-width', 1);
   }
   else {
     $( '#tilesetTable td' ).css('border-width', 0);
+  }
+});
+
+//TODO the select is correct but the property isn't working. Once it works, need same with vertical line
+$('#fullScreenShowGridLines').change(function(){
+  if ($(this).is(':checked')) {
+    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 1);
+  }
+  else {
+    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 0);
   }
 });

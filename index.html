@@ -151,18 +151,29 @@
       </div>
     </div>
 
-    <!-- Table -->
     <div class="tilesetTable">
       <h3>Tileset</h3>
       lock tileset (or just hold shift): <input id="tilesetTableLock" type="checkbox">
-      show grid lines: <input id="tilesetTableLock" type="checkbox" checked>
+      show grid lines: <input id="tilesetTableShowGridLines" type="checkbox" checked>
       <table id="tilesetTable">
+      </table>
+    </div>
+    <br>
+    <div class="fullScreenTable">
+      <h3>Screen</h3>
+      show grid lines: <input id="fullScreenShowGridLines" type="checkbox" checked>
+      <table id="fullScreenTable">
       </table>
     </div>
   </div>
 </body>
 <script type="text/javascript" src="code.js"></script>
 <script>
-  drawTable(32, 32);
+  drawTilesetTable();
+  drawScreenTable();
+
+  resetColoring();
+  document.getElementById("p0c0").click();
+  setDefaultScreen();
 </script>
 </html>
