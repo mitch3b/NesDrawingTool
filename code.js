@@ -76,6 +76,9 @@ function setDefaultScreen() {
   }
 }
 
+var tileClassRegex = new RegExp('tile-r');
+var palletteClassRegex = new RegExp('p[0-9]c[0-9]');
+
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
   for(var j = 0 ; j < 4 ; j++) {
@@ -93,18 +96,7 @@ function resetColoring() {
     row = findTopLeftCorner(row);
     column = findTopLeftCorner(column);
 
-    let tilesetTable = document.getElementById('tilesetTable');
-    let fullScreenTable = document.getElementById('fullScreenTable');
-
-    for(var i = 0 ; i < 4 ; i++) {
-      for(var j = 0 ; j < 4 ; j++) {
-        fullScreenTable.rows[row + i].cells[column + j].style.backgroundColor
-          = tilesetTable.rows[selectedRow + i].cells[selectedColumn + j].style.backgroundColor;
-
-        fullScreenTable.rows[row + i].cells[column + j].classList
-          .add(getTileClassName(selectedRow + i, selectedColumn + j));
-      }
-    }
+    loadTile(row, column, selectedRow, selectedColumn);
   });
 
   $( '#tilesetTable td' ).click(function() {
@@ -127,6 +119,23 @@ function resetColoring() {
 
     $('.' + getTileClassName(row, column)).css('background-color', theColor);
   });
+}
+
+function loadTile(tileRow, tileColumn, tilesetRow, tilesetColumn) {
+  let tilesetTable = document.getElementById('tilesetTable');
+  let fullScreenTable = document.getElementById('fullScreenTable');
+
+  for(var i = 0 ; i < 4 ; i++) {
+    for(var j = 0 ; j < 4 ; j++) {
+      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].style.backgroundColor
+        = tilesetTable.rows[tilesetRow + i].cells[tilesetColumn + j].style.backgroundColor;
+
+      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList.remove(
+        getClass(fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList, tileClassRegex));
+      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList
+        .add(getTileClassName(tilesetRow + i, tilesetColumn + j));
+    }
+  }
 }
 
 function getTileClassName(row, column) {
@@ -171,7 +180,7 @@ $('.palletteTable td').click(function(){
       colorToSet = $('#p' + newPalletteNumber + 'c' + i).css('background-color');
       $('.p' + currentPallette + 'c' + i).each(function(){
         $(this).css("background-color", colorToSet);
-        $(this).removeClass();
+        $(this).removeClass('p' + currentPallette + 'c' + i);
         $(this).addClass('p' + newPalletteNumber + 'c' + i);
 
         //Update screen
@@ -212,9 +221,24 @@ function placeFileContent(file) {
     var tilesetTableTable = document.getElementById("tilesetTable");
     for (let row of tilesetTableTable.rows) {
       for(let cell of row.cells) {
-        cell.classList.remove(...cell.classList);
+        cell.classList.remove(getClass(cell.classList, palletteClassRegex));
         cell.classList.add(vals[i]);
         i++;
+      }
+    }
+
+    resetColoring();
+
+    var fullScreenTable = document.getElementById("fullScreenTable");
+    for (var k = 0; k <  fullScreenTable.rows.length ; k += 4) {
+      for(var j = 0 ; j < fullScreenTable.rows[k].cells.length ; j += 4) {
+         // Probably need to get the class
+         var tmp = vals[i];
+         i++;
+         var row = Math.floor(tmp/10);
+         var column = tmp % 10;
+
+         loadTile(k, j, 4*row, 4*column)
       }
     }
 
@@ -243,6 +267,7 @@ function getStateAsString() {
   var palletteTable = document.getElementById("palletteTable");
   for (let row of palletteTable.rows) {
     for(let cell of row.cells) {
+       //TODO can reduce this dramatically
        result += cell.style.backgroundColor + delimiter; // your code below
     }
   }
@@ -250,11 +275,36 @@ function getStateAsString() {
   var tilesetTableTable = document.getElementById("tilesetTable");
   for (let row of tilesetTableTable.rows) {
     for(let cell of row.cells) {
-       result += cell.classList[0] + delimiter; // your code below
+      //TODO can reduce this size
+      result += cell.classList[0] + delimiter; // your code below
+    }
+  }
+
+  var fullScreenTable = document.getElementById("fullScreenTable");
+  for (var i = 0; i <  fullScreenTable.rows.length ; i += 4) {
+    for(var j = 0 ; j < fullScreenTable.rows[i].cells.length ; j += 4) {
+       // Probably need to get the class
+       var tmp = getClass(fullScreenTable.rows[i].cells[j].classList, tileClassRegex);
+       tmp = tmp.substring(6);
+       var tmp2 = tmp.split('c');
+       var row = parseInt(tmp2[0]);
+       var column = parseInt(tmp2[1]);
+       var tile = (row/4) + "" + (column/4);
+       result += tile + delimiter;
     }
   }
 
   return result;
+}
+
+function getClass(classList, regex) {
+  for (var i=0, l=classList.length; i<l; ++i) {
+    if(regex.exec(classList[i])) {
+        return classList[i];
+    }
+  }
+
+  //TODO probably throw an exception
 }
 
 function downloadToFile(content, filename, contentType) {
