@@ -78,6 +78,7 @@ function setDefaultScreen() {
 
 var tileClassRegex = new RegExp('tile-r');
 var palletteClassRegex = new RegExp('p[0-9]c[0-9]');
+var colorClassRegex = new RegExp('color-');
 
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
@@ -160,9 +161,13 @@ $('.colortable td').click(function(){
   currentPalletteCell.style.backgroundColor = theColor;
   $('#chosen-color')[0].style.backgroundColor = theColor;
   $('.'+ currentPalletteCell.id).css('background-color', theColor);
+  removeClasses(currentPalletteCell.classList, colorClassRegex);
+  currentPalletteCell.classList.add($(this).attr('id'));
 
   resetColoring();
 });
+
+
 
 // When a cell on the pallette table is clicked
 $('.palletteTable td').click(function(){
@@ -205,6 +210,14 @@ function getFile(event) {
   }
 }
 
+function getBackgroundColorFromFile(value) {
+  return '';//TODO
+}
+
+function getStringForBackgroundColor(backgroundColor) {
+  
+}
+
 function placeFileContent(file) {
 	readFileContent(file).then(content => {
     let vals = content.split(delimiter);
@@ -213,7 +226,7 @@ function placeFileContent(file) {
     var palletteTable = document.getElementById("palletteTable");
     for (let row of palletteTable.rows) {
       for(let cell of row.cells) {
-         cell.style.backgroundColor = vals[i];
+         cell.style.backgroundColor = vals[i];//TODO this should be a color optoin
          i++;
       }
     }
@@ -301,6 +314,19 @@ function getClass(classList, regex) {
   for (var i=0, l=classList.length; i<l; ++i) {
     if(regex.exec(classList[i])) {
         return classList[i];
+    }
+  }
+
+  //TODO probably throw an exception
+}
+
+function removeClasses(classList, regex) {
+  for (var i=0, l=classList.length; i<l;) {
+    if(regex.exec(classList[i])) {
+        classList.remove(classList[i]);
+    }
+    else {
+      i++
     }
   }
 
