@@ -215,7 +215,7 @@ function getBackgroundColorFromFile(value) {
 }
 
 function getStringForBackgroundColor(backgroundColor) {
-  
+
 }
 
 function placeFileContent(file) {
