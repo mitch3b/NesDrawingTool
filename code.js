@@ -65,7 +65,9 @@ function drawTilesetTable() {
 
 function drawScreenTable() {
   let fullScreenTable = document.getElementById('fullScreenTable');
-  drawTable(60, 64, fullScreenTable);
+  drawTable(64, 64, fullScreenTable);
+
+  $('#fullScreenTable td').addClass('p0c3');
 }
 
 // Better ways to do this but good enough for now til load/save is better
@@ -73,7 +75,7 @@ function setDefaultScreen() {
   let fullScreenTable = document.getElementById('fullScreenTable');
 
   for(var i = 0 ; i < 16 ; i++) {
-    for(var j = 0 ; j < 15 ; j++) {
+    for(var j = 0 ; j < 16 ; j++) {
       fullScreenTable.rows[4*j].cells[4*i].click();
     }
   }
@@ -92,6 +94,25 @@ function getPalletteClassRegex() {
 function getColorClassRegex() {
   return new RegExp("\\bcolor-\\S+", "g");
 }
+
+function updateScreenPallette(row, column, palletteNum) {
+  var rowStart = row - (row % 8)
+  var rowEnd = rowStart + 8;
+
+  var columnStart = column - (column % 8)
+  var columnEnd = columnStart + 8;
+
+  //Theres probably a better nth-child way to pluck these out
+  for(var i = rowStart; i < rowEnd ; i++){
+    for(var j = columnStart ; j < columnEnd ; j++) {
+      var cell = fullScreenTable.rows[i].cells[j];
+      var pXcY = getClass(cell.classList, getPalletteClassRegex());
+
+      updateTilePallette(cell, 'p' + palletteNum + 'c' + pXcY.slice(-1));
+    }
+  }
+}
+
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
   for(var j = 0 ; j < 4 ; j++) {
@@ -112,7 +133,13 @@ function resetColoring() {
     row = findTopLeftCorner(row);
     column = findTopLeftCorner(column);
 
-    loadTile(row, column, selectedRow, selectedColumn);
+    if(placeTile) {
+      loadTile(row, column, selectedRow, selectedColumn);
+    }
+    //Still need to call this even if both aret true to catch the rest of the 2x2
+    if(placePallette) {
+      updateScreenPallette(row, column, currentPallette);
+    }
   });
 
   $('#tilesetTable td').click(function() {
@@ -161,9 +188,11 @@ function loadTile(tileRow, tileColumn, tilesetRow, tilesetColumn) {
       let currentFullScreenCell = fullScreenTable.rows[tileRow + i].cells[tileColumn + j];
       let currentTileCell = tilesetTable.rows[tilesetRow + i].cells[tilesetColumn + j];
 
-      updateTilePallette(currentFullScreenCell, getClass(currentTileCell.classList, getPalletteClassRegex()));
+      var tilePXcY = getClass(currentTileCell.classList, getPalletteClassRegex());
+      var currentPXcY = getClass(currentFullScreenCell.classList, getPalletteClassRegex());
 
-      //TODO only have to do really pull this and store this once (maybe top left corner)
+      updateTilePallette(currentFullScreenCell, 'p' + currentPXcY.charAt(1) + 'c' + tilePXcY.slice(-1));
+
       removeClasses(currentFullScreenCell.classList, getTileClassRegex());
       currentFullScreenCell.classList.add(getTileClassName(tilesetRow + i, tilesetColumn + j));
     }
@@ -229,7 +258,7 @@ $('.palletteTable td').click(function(){
       var newColorColor = getClass(document.getElementById('p' + newPalletteNumber + 'c' + i).classList, getColorClassRegex());
       var prevColor = getClass(document.getElementById('p' + currentPallette + 'c' + i).classList, getColorClassRegex());
 
-      $('.p' + currentPallette + 'c' + i).each(function(){
+      $('#tilesetTable td.p' + currentPallette + 'c' + i).each(function(){
         $(this).removeClass('p' + currentPallette + 'c' + i);
         $(this).addClass('p' + newPalletteNumber + 'c' + i);
         $(this).removeClass(prevColor);
@@ -270,9 +299,6 @@ function placeFileContent(file) {
     var tilesetTableTable = document.getElementById("tilesetTable");
     for (let row of tilesetTableTable.rows) {
       for(let cell of row.cells) {
-
-        if(i == 1041)
-                console.log(i);
         updateTilePallette(cell, 'p0c' + vals[i]);
         i++;
       }
@@ -281,6 +307,16 @@ function placeFileContent(file) {
     resetColoring();
 
     var fullScreenTable = document.getElementById("fullScreenTable");
+    for (var k = 0; k <  fullScreenTable.rows.length ; k += 8) {
+      for(var j = 0 ; j < fullScreenTable.rows[k].cells.length ; j += 8) {
+         // Probably need to get the class
+         var palletteNum = vals[i];
+         i++;
+
+         updateScreenPallette(k, j, palletteNum);
+      }
+    }
+
     for (var k = 0; k <  fullScreenTable.rows.length ; k += 4) {
       for(var j = 0 ; j < fullScreenTable.rows[k].cells.length ; j += 4) {
          // Probably need to get the class
@@ -289,15 +325,11 @@ function placeFileContent(file) {
 
          var charNum = tmp.charCodeAt(0);
 
-         if(charNum > 58) {
-           charNum--;
-         }
-
          charNum = charNum - 33;
          var row = 4*Math.floor(charNum/8);
          var column = 4*(charNum % 8);
 
-         loadTile(k, j, row, column)
+         loadTile(k, j, row, column);//TODOM pass pallette num
       }
     }
 
@@ -336,13 +368,22 @@ function getStateAsString() {
   var tilesetTableTable = document.getElementById("tilesetTable");
   for (let row of tilesetTableTable.rows) {
     for(let cell of row.cells) {
-      console.log(i);
       //This class comes back as pXcY. We only care about Y bc tileset same pallette for everything
       result += (getClass(cell.classList, getPalletteClassRegex())).slice(-1);
     }
   }
 
   var fullScreenTable = document.getElementById("fullScreenTable");
+  for (var i = 0; i <  fullScreenTable.rows.length ; i += 8) {
+    for(var j = 0 ; j < fullScreenTable.rows[i].cells.length ; j += 8) {
+       // Probably need to get the class
+       var tmp = getClass(fullScreenTable.rows[i].cells[j].classList, getPalletteClassRegex())
+       var pallette = tmp.charAt(1);
+
+       result += pallette;
+    }
+  }
+
   for (var i = 0; i <  fullScreenTable.rows.length ; i += 4) {
     for(var j = 0 ; j < fullScreenTable.rows[i].cells.length ; j += 4) {
        // Probably need to get the class
@@ -523,7 +564,6 @@ $('#tilesetTableShowGridLines').change(function(){
   }
 });
 
-//TODO the select is correct but the property isn't working. Once it works, need same with vertical line
 $('#fullScreenShowGridLines').change(function(){
   if ($(this).is(':checked')) {
     $('#fullScreenTable').find('.tile-end-right-hidden').removeClass('tile-end-right-hidden').addClass('tile-end-right');
@@ -533,4 +573,16 @@ $('#fullScreenShowGridLines').change(function(){
     $('#fullScreenTable').find('.tile-end-right').removeClass('tile-end-right').addClass('tile-end-right-hidden');
     $('#fullScreenTable').find('.tile-end-bottom').removeClass('tile-end-bottom').addClass('tile-end-bottom-hidden');
   }
+});
+
+//TODO this mechanism is REALLY unintuitive but just want functionality working before getting feedback
+var placePallette = false;
+var placeTile = true;
+
+$('#placeTileOnScreenMode').change(function(){
+  placeTile = $(this).is(':checked');
+});
+
+$('#placePalletteOnScreenMode').change(function(){
+  placePallette = $(this).is(':checked');
 });
