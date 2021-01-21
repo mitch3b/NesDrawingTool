@@ -2,6 +2,7 @@ var pressedKeys = {};
 const SHIFT_KEYCODE = 16;
 var currentPallette = 0;
 var currentColor = 0;
+var currentSelectedPalletteId;
 var selectedRow = 0;
 var selectedColumn = 0;
 
@@ -12,7 +13,7 @@ window.onkeydown = function(e) {
 
   switch(e.keyCode) {
     case 37: switchCurrentPallette((currentPallette + 3) % 4); break; // <-
-    case 39: switchCurrentPallette((currentPallette + 1) % 4); break; // ->
+    case 39: switchCurrentPallette((currentPallette + 5) % 4); break; // ->
     case 49: switchCurrentPalletteColor(0); break; // 1
     case 50: switchCurrentPalletteColor(1); break; // 2
     case 51: switchCurrentPalletteColor(2); break; // 3
@@ -31,8 +32,6 @@ function getTilesetNumber(number) {
 }
 
 function switchCurrentPallette(number) {
-  console.log("switching to pallette to: " + number);
-
   $('#p' + number + 'c' + currentColor).click();
 }
 
@@ -57,7 +56,11 @@ function drawTilesetTable() {
   drawTable(32, 32, tilesetTable);
 
   //Set default color
-  $('#tilesetTable td').addClass("p0c3");
+  $('#tilesetTable td').each(function() {
+    updateJqueryTileClass($(this), "p0c3");
+    updateJqueryColor($(this), 'color-p'); // might want to load this from the pallette instead of hardcoding
+  });
+
 }
 
 function drawScreenTable() {
@@ -74,23 +77,36 @@ function setDefaultScreen() {
       fullScreenTable.rows[4*j].cells[4*i].click();
     }
   }
+  //TODO this isn't getting colored in...
 }
 
-var tileClassRegex = new RegExp('tile-r');
-var palletteClassRegex = new RegExp('p[0-9]c[0-9]');
+//These aren't stateless so get a fresh one every time (might be a way to reset it and avoid creating it)
+function getTileClassRegex() {
+  return new RegExp('tile-r');
+}
 
+function getPalletteClassRegex() {
+  return new RegExp('p[0-9]c[0-9]');
+}
+
+function getColorClassRegex() {
+  return new RegExp("\\bcolor-\\S+", "g");
+}
 // If new td's were created, need to make sure they have listeniners
 function resetColoring() {
   for(var j = 0 ; j < 4 ; j++) {
     for(var i = 0 ; i < 4 ; i++) {
-      theColor = $('#p' + j + 'c' + i).css('background-color');
-      $('.p' + j + 'c' + i).css('background-color', theColor);
+      $('#p' + j + 'c' + i).each(function() {
+        theColor = getClass($(this)[0].classList, getColorClassRegex());
+        //TODO still need to remove th current class (although this whole set of logic might not to anything anymore)
+        $(this).addClass(theColor);
+      });
     }
   }
 
   reselectTile();
 
-  $( '#fullScreenTable td' ).click(function() {
+  $('#fullScreenTable td').click(function() {
     var row = $(this).closest("tr").index();
     var column = $(this).closest("td").index();
     row = findTopLeftCorner(row);
@@ -99,7 +115,7 @@ function resetColoring() {
     loadTile(row, column, selectedRow, selectedColumn);
   });
 
-  $( '#tilesetTable td' ).click(function() {
+  $('#tilesetTable td').click(function() {
     var row = $(this).closest("tr").index();
     var column = $(this).closest("td").index();
     selectTile(findTopLeftCorner(row), findTopLeftCorner(column));
@@ -109,16 +125,31 @@ function resetColoring() {
         return;
     }
 
-    $(this).removeClass(function (index, css) {
-       return (css.match (/p[0-9]c[0-9]/g) || []).join(' ');
+    updateJqueryTileClass($(this), currentSelectedPalletteId);
+
+    var currentColorClass = getCurrentChosenColorClass();
+    updateJqueryColor($(this), currentColorClass);
+
+    $('.' + getTileClassName(row, column)).each(function() {
+      updateJqueryTileClass($(this), currentSelectedPalletteId);
+      updateJqueryColor($(this), currentColorClass);
     });
-    $(this).addClass('p' + currentPallette + 'c' + currentColor);
-
-    theColor = $('#chosen-color').css('background-color');
-    $(this).css('background-color', theColor);
-
-    $('.' + getTileClassName(row, column)).css('background-color', theColor);
   });
+}
+
+function updateJqueryTileClass(tile, pXcY) {
+  tile.removeClass(function (index, css) {
+     return (getPalletteClassRegex().exec(css) || []).join(' ');
+  });
+
+  tile.addClass(pXcY);
+}
+
+function updateTilePallette(tile, pXcY) {
+  removeClasses(tile.classList, getPalletteClassRegex());
+  tile.classList.add(pXcY);
+
+  updateColor(tile.classList, getClass($('#' + pXcY)[0].classList, getColorClassRegex()));
 }
 
 function loadTile(tileRow, tileColumn, tilesetRow, tilesetColumn) {
@@ -127,13 +158,14 @@ function loadTile(tileRow, tileColumn, tilesetRow, tilesetColumn) {
 
   for(var i = 0 ; i < 4 ; i++) {
     for(var j = 0 ; j < 4 ; j++) {
-      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].style.backgroundColor
-        = tilesetTable.rows[tilesetRow + i].cells[tilesetColumn + j].style.backgroundColor;
+      let currentFullScreenCell = fullScreenTable.rows[tileRow + i].cells[tileColumn + j];
+      let currentTileCell = tilesetTable.rows[tilesetRow + i].cells[tilesetColumn + j];
 
-      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList.remove(
-        getClass(fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList, tileClassRegex));
-      fullScreenTable.rows[tileRow + i].cells[tileColumn + j].classList
-        .add(getTileClassName(tilesetRow + i, tilesetColumn + j));
+      updateTilePallette(currentFullScreenCell, getClass(currentTileCell.classList, getPalletteClassRegex()));
+
+      //TODO only have to do really pull this and store this once (maybe top left corner)
+      removeClasses(currentFullScreenCell.classList, getTileClassRegex());
+      currentFullScreenCell.classList.add(getTileClassName(tilesetRow + i, tilesetColumn + j));
     }
   }
 }
@@ -146,23 +178,37 @@ function findTopLeftCorner(number) {
   return 4*Math.floor(number/4);
 }
 
-// Set chosen color and call cell color function
-function setChosenColor(color){
-  $('#chosen-color').css('background-color', color);
-
-  resetColoring();
-};
-
 // When a cell on the color table is clicked
 $('.colortable td').click(function(){
-  theColor = $(this).css('background-color');
+  var colorId = $(this).attr('id');
   currentPalletteCell = $('.clickedColor')[0];
-  currentPalletteCell.style.backgroundColor = theColor;
-  $('#chosen-color')[0].style.backgroundColor = theColor;
-  $('.'+ currentPalletteCell.id).css('background-color', theColor);
+
+  //Update everything with this pallette color
+  $('.'+ currentPalletteCell.id).each(function(){
+    updateJqueryColor($(this), colorId);
+  });
+
+  //Update the color class in pallette display
+  updateColor(currentPalletteCell.classList, colorId);
+  //Update the color class in the current color display
+  updateColor($('#chosen-color')[0].classList, colorId);
 
   resetColoring();
 });
+
+// For when fetching element using reg javascript
+function updateColor(classList, newColorId) {
+  removeClasses(classList, getColorClassRegex());
+  classList.add(newColorId);
+}
+
+// For when fetching element using jquery (which accesses class list differently)
+function updateJqueryColor(JqueryCell, newColorId) {
+  JqueryCell.removeClass (function (index, className) {
+    return (className.match ( getColorClassRegex() ) || []).join(' ');
+  });
+  JqueryCell.addClass(newColorId);
+}
 
 // When a cell on the pallette table is clicked
 $('.palletteTable td').click(function(){
@@ -170,30 +216,31 @@ $('.palletteTable td').click(function(){
   $( '.palletteTable td' ).removeClass("clickedColor")
   $(this).css('border-color', '#000000');
   $(this).addClass("clickedColor");
-  theColor = $(this).css('background-color');
-  currentColor = $(this)[0].id.slice(-1);
+
+  crrentColor = parseInt($(this)[0].id.charAt(3))
   let newPalletteNumber = parseInt($(this)[0].id.charAt(1));
+
+  let colorId = getClass($(this).attr('class').split(/\s+/), getColorClassRegex());
+  updateJqueryColor($('#chosen-color'), colorId);
 
   if(currentPallette != newPalletteNumber) {
     //Update tilesetTable
     for(var i = 0 ; i < 4 ; i++) {
-      colorToSet = $('#p' + newPalletteNumber + 'c' + i).css('background-color');
+      var newColorColor = getClass(document.getElementById('p' + newPalletteNumber + 'c' + i).classList, getColorClassRegex());
+      var prevColor = getClass(document.getElementById('p' + currentPallette + 'c' + i).classList, getColorClassRegex());
+
       $('.p' + currentPallette + 'c' + i).each(function(){
-        $(this).css("background-color", colorToSet);
         $(this).removeClass('p' + currentPallette + 'c' + i);
         $(this).addClass('p' + newPalletteNumber + 'c' + i);
-
-        //Update screen
-        var row = $(this).closest("tr").index();
-        var column = $(this).closest("td").index();
-        $('.' + getTileClassName(row, column)).css('background-color', colorToSet);
+        $(this).removeClass(prevColor);
+        $(this).addClass(newColorColor);
       });
     }
 
     currentPallette = newPalletteNumber;
   }
 
-  setChosenColor(theColor);
+  currentSelectedPalletteId = $(this)[0].id;
 });
 
 document.getElementById('input-file').addEventListener('change', getFile)
@@ -207,22 +254,26 @@ function getFile(event) {
 
 function placeFileContent(file) {
 	readFileContent(file).then(content => {
-    let vals = content.split(delimiter);
+    let vals = content.split(""); // convert to char array
+    var i = 0;
 
-    let i = 0;
     var palletteTable = document.getElementById("palletteTable");
     for (let row of palletteTable.rows) {
       for(let cell of row.cells) {
-         cell.style.backgroundColor = vals[i];
-         i++;
+        if(!cell.classList.contains("palletteBuffer")) {
+          updateColor(cell.classList, 'color-' + vals[i]);
+          i++;
+        }
       }
     }
 
     var tilesetTableTable = document.getElementById("tilesetTable");
     for (let row of tilesetTableTable.rows) {
       for(let cell of row.cells) {
-        cell.classList.remove(getClass(cell.classList, palletteClassRegex));
-        cell.classList.add(vals[i]);
+
+        if(i == 1041)
+                console.log(i);
+        updateTilePallette(cell, hexToPalletteClass(vals[i]));//TODO loadTile ?
         i++;
       }
     }
@@ -235,10 +286,18 @@ function placeFileContent(file) {
          // Probably need to get the class
          var tmp = vals[i];
          i++;
-         var row = Math.floor(tmp/10);
-         var column = tmp % 10;
 
-         loadTile(k, j, 4*row, 4*column)
+         var charNum = tmp.charCodeAt(0);
+
+         if(charNum > 58) {
+           charNum--;
+         }
+
+         charNum = charNum - 33;
+         var row = 4*Math.floor(charNum/8);
+         var column = 4*(charNum % 8);
+
+         loadTile(k, j, row, column)
       }
     }
 
@@ -247,7 +306,6 @@ function placeFileContent(file) {
   }).catch(error => console.log(error))
 }
 
-let delimiter = ";"
 function readFileContent(file) {
 	const reader = new FileReader()
   return new Promise((resolve, reject) => {
@@ -262,21 +320,39 @@ $("#save").click(function() {
   downloadToFile(content, "NesDrawingToolState.txt", "text/plain")
 });
 
+function palletteClassToHex(pXcY) {
+  var x = parseInt(pXcY.slice(1));
+  var y = parseInt(pXcY.slice(-1));
+
+  return (x*4 + y).toString(16);
+}
+
+function hexToPalletteClass(hexChar) {
+  var num = parseInt(hexChar, 16);
+  var x = Math.floor(num/4);
+  var y = num % 4;
+
+  return 'p' + x + 'c' + y;
+}
+
 function getStateAsString() {
   var result = "";
   var palletteTable = document.getElementById("palletteTable");
+  var i = 0;
   for (let row of palletteTable.rows) {
     for(let cell of row.cells) {
-       //TODO can reduce this dramatically
-       result += cell.style.backgroundColor + delimiter; // your code below
+      if(!cell.classList.contains("palletteBuffer")) {
+        var cellClass = getClass(cell.classList, getColorClassRegex());
+        result += cellClass.slice(-1);
+      }
     }
   }
 
   var tilesetTableTable = document.getElementById("tilesetTable");
   for (let row of tilesetTableTable.rows) {
     for(let cell of row.cells) {
-      //TODO can reduce this size
-      result += cell.classList[0] + delimiter; // your code below
+      console.log(i);
+      result += palletteClassToHex(getClass(cell.classList, getPalletteClassRegex()));
     }
   }
 
@@ -284,23 +360,41 @@ function getStateAsString() {
   for (var i = 0; i <  fullScreenTable.rows.length ; i += 4) {
     for(var j = 0 ; j < fullScreenTable.rows[i].cells.length ; j += 4) {
        // Probably need to get the class
-       var tmp = getClass(fullScreenTable.rows[i].cells[j].classList, tileClassRegex);
+       var tmp = getClass(fullScreenTable.rows[i].cells[j].classList, getTileClassRegex());
        tmp = tmp.substring(6);
        var tmp2 = tmp.split('c');
        var row = parseInt(tmp2[0]);
        var column = parseInt(tmp2[1]);
-       var tile = (row/4) + "" + (column/4);
-       result += tile + delimiter;
+       var charNum = 33 + 8*(row/4) + (column/4); //Add 33 bc chars before that are blank
+       var tileChar = String.fromCharCode(charNum);
+       result += tileChar;
     }
   }
 
   return result;
 }
 
+function getCurrentChosenColorClass() {
+  return getClass($('#chosen-color')[0].classList, getColorClassRegex());
+}
+
 function getClass(classList, regex) {
-  for (var i=0, l=classList.length; i<l; ++i) {
+  for (var i=0; i < classList.length ; ++i) {
     if(regex.exec(classList[i])) {
         return classList[i];
+    }
+  }
+
+  //TODO probably throw an exception
+}
+
+function removeClasses(classList, regex) {
+  for (var i=0, l=classList.length; i<l;) {
+    if(regex.exec(classList[i])) {
+        classList.remove(classList[i]);
+    }
+    else {
+      i++
     }
   }
 
@@ -412,8 +506,6 @@ function selectTile(row, column) {
     table.rows[selectedRow + i].cells[selectedColumn].classList.add('highlight-border-left');
     table.rows[selectedRow + i].cells[selectedColumn + 3].classList.add('highlight-border-right');
   }
-
-
 }
 
 $("#removeRow").click(function() {
@@ -438,19 +530,21 @@ $("#canvasZoomIn").click(function() {
 
 $('#tilesetTableShowGridLines').change(function(){
   if ($(this).is(':checked')) {
-    $( '#tilesetTable td' ).css('border-width', 1);
+    $('#tilesetTable td').css('border-width', 1);
   }
   else {
-    $( '#tilesetTable td' ).css('border-width', 0);
+    $('#tilesetTable td').css('border-width', 0);
   }
 });
 
 //TODO the select is correct but the property isn't working. Once it works, need same with vertical line
 $('#fullScreenShowGridLines').change(function(){
   if ($(this).is(':checked')) {
-    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 1);
+    $('#fullScreenTable').find('.tile-end-right-hidden').removeClass('tile-end-right-hidden').addClass('tile-end-right');
+    $('#fullScreenTable').find('.tile-end-bottom-hidden').removeClass('tile-end-bottom-hidden').addClass('tile-end-bottom');
   }
   else {
-    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 0);
+    $('#fullScreenTable').find('.tile-end-right').removeClass('tile-end-right').addClass('tile-end-right-hidden');
+    $('#fullScreenTable').find('.tile-end-bottom').removeClass('tile-end-bottom').addClass('tile-end-bottom-hidden');
   }
 });
