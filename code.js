@@ -530,19 +530,21 @@ $("#canvasZoomIn").click(function() {
 
 $('#tilesetTableShowGridLines').change(function(){
   if ($(this).is(':checked')) {
-    $( '#tilesetTable td' ).css('border-width', 1);
+    $('#tilesetTable td').css('border-width', 1);
   }
   else {
-    $( '#tilesetTable td' ).css('border-width', 0);
+    $('#tilesetTable td').css('border-width', 0);
   }
 });
 
 //TODO the select is correct but the property isn't working. Once it works, need same with vertical line
 $('#fullScreenShowGridLines').change(function(){
   if ($(this).is(':checked')) {
-    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 1);
+    $('#fullScreenTable').find('.tile-end-right-hidden').removeClass('tile-end-right-hidden').addClass('tile-end-right');
+    $('#fullScreenTable').find('.tile-end-bottom-hidden').removeClass('tile-end-bottom-hidden').addClass('tile-end-bottom');
   }
   else {
-    $( '#fullScreenTable').find('.tile-end-bottom' ).css('border-bottom-width', 0);
+    $('#fullScreenTable').find('.tile-end-right').removeClass('tile-end-right').addClass('tile-end-right-hidden');
+    $('#fullScreenTable').find('.tile-end-bottom').removeClass('tile-end-bottom').addClass('tile-end-bottom-hidden');
   }
 });
