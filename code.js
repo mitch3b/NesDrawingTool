@@ -273,7 +273,7 @@ function placeFileContent(file) {
 
         if(i == 1041)
                 console.log(i);
-        updateTilePallette(cell, hexToPalletteClass(vals[i]));//TODO loadTile ?
+        updateTilePallette(cell, 'p0c' + vals[i]);
         i++;
       }
     }
@@ -320,21 +320,6 @@ $("#save").click(function() {
   downloadToFile(content, "NesDrawingToolState.txt", "text/plain")
 });
 
-function palletteClassToHex(pXcY) {
-  var x = parseInt(pXcY.slice(1));
-  var y = parseInt(pXcY.slice(-1));
-
-  return (x*4 + y).toString(16);
-}
-
-function hexToPalletteClass(hexChar) {
-  var num = parseInt(hexChar, 16);
-  var x = Math.floor(num/4);
-  var y = num % 4;
-
-  return 'p' + x + 'c' + y;
-}
-
 function getStateAsString() {
   var result = "";
   var palletteTable = document.getElementById("palletteTable");
@@ -352,7 +337,8 @@ function getStateAsString() {
   for (let row of tilesetTableTable.rows) {
     for(let cell of row.cells) {
       console.log(i);
-      result += palletteClassToHex(getClass(cell.classList, getPalletteClassRegex()));
+      //This class comes back as pXcY. We only care about Y bc tileset same pallette for everything
+      result += (getClass(cell.classList, getPalletteClassRegex())).slice(-1);
     }
   }
 
