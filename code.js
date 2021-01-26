@@ -382,7 +382,7 @@ $('.palletteTable td').click(function(){
   $(this).css('border-color', '#000000');
   $(this).addClass("clickedColor");
 
-  currentColor = parseInt($(this)[0].id.charAt(3))
+  currentColor = parseInt($(this)[0].id.charAt(3));
   let newPalletteNumber = parseInt($(this)[0].id.charAt(1));
 
   let colorId = getClass($(this).attr('class').split(/\s+/), getColorClassRegex());
@@ -398,15 +398,21 @@ $('.colortable td').click(function(){
   var colorId = $(this).attr('id');
   currentPalletteCell = $('.clickedColor')[0];
 
-  //Update everything with this pallette color
-  $('.'+ currentPalletteCell.id).each(function(){
-    updateJqueryColor($(this), colorId);
-  });
-
   //Update the color class in pallette display
   updateColor(currentPalletteCell.classList, colorId);
   //Update the color class in the current color display
   updateColor($('#chosen-color')[0].classList, colorId);
+  
+  var pallette = $('.clickedColor')[0].id.charAt(1);
+  var color = $('.clickedColor')[0].id.charAt(3);
+  
+  colors[pallette][color] = $('#chosen-color').css('background-color');
+  colorClasses[pallette][color] = colorId;
+  
+  //Make sure everything reflects this new color
+  loadCurrentTileIntoEditor();
+  initTilesetCanvas();
+  initScreenCanvas();
 });
 
 // TODO don't think need this. should have max one class
