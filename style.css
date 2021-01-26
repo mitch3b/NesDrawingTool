@@ -40,6 +40,15 @@ canvas {
     border: 6px solid black;
 }  
 
+#animationCanvas0,#animationCanvas1{
+    position:absolute; top:50px; left:0px;
+}
+
+#animationCanvasDiv {
+  position: relative;
+  height: 100px; //Not the way to do it but good enough for now
+}
+
 #tilesetHighlightCanvas,#tilesetCanvas{
     position:absolute; top:50px; left:0px;
 }

@@ -99,11 +99,11 @@
 
         <h3>Pallette</h3>
         <div class="tooltip">
-          (hot key cheat sheet)
-        <span class="tooltiptext">
+          Hot Keys Cheat Sheet: <br>
+          <br>
           use 1, 2, 3, and 4 key to choose color within pallet <br>
           use left/right arrow key to cycle to other pallettes <br>
-        </span>
+          use a, s, d, w to fast change current tileset tile <br>
         <br>
         </div>
         <table id="palletteTable" class="palletteTable">
@@ -154,10 +154,15 @@
 
     <div class="tilesetTable">
       <h3>Tile Editor</h3>
-      lock tileset (or just hold shift): <input id="tilesetTableLock" type="checkbox">
-      show grid lines: <input id="tilesetTableShowGridLines" type="checkbox" checked>
       <table id="tileEditorTable">
       </table>
+    </div>
+    
+     
+    <div id="animationCanvasDiv">
+      <h3>Animation (coming soon)</h3>
+      <canvas id="animationCanvas0"></canvas>
+      <canvas id="animationCanvas1"></canvas>
     </div>
     
     <div id="tilesetCanvasDiv">

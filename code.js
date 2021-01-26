@@ -73,7 +73,7 @@ function init() {
   
   var tilesetHighlightCanvas = document.getElementById("tilesetHighlightCanvas");
   tilesetHighlightCanvas.height = tilesetCanvas.height;
-  tilesetHighlightCanvas.width = tilesetCanvas.width;
+  tilesetHighlightCanvas.width = tilesetCanvas.width;  
   
   initTilesetCanvas();
   
@@ -89,6 +89,25 @@ function init() {
   
   loadCurrentTileIntoEditor();
   highlightCurrentTile();
+  
+  for(var i = 0 ; i < 2 ; i++) {
+    var animationCanvas = document.getElementById("animationCanvas" + i);
+    animationCanvas.height = NUM_PIXELS_PER_TILE_Y*NUM_PIXELS_PER_CANVAS_PIXEL;
+    animationCanvas.width = NUM_PIXELS_PER_TILE_X*NUM_PIXELS_PER_CANVAS_PIXEL;
+    
+    var ctx = animationCanvas.getContext('2d');
+  
+    //TODO fill this with actual tile info, keep it up to date and consider making it more than 1 tile
+    ctx.fillStyle = (i === 1) ? "red" : "blue";
+    ctx.fillRect(0, 0, animationCanvas.width, animationCanvas.height);
+  }
+  
+  let animation1Z = 1000;
+  let timer = setInterval(function() {
+    var animationCanvas = document.getElementById("animationCanvas0");
+    animationCanvas.style.zIndex = (animationCanvas.style.zIndex === "0") ? "1" : "0";
+
+  }, 1000);
   
   $('#p0c0').click();
 }
