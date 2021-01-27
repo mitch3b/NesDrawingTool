@@ -13,11 +13,21 @@ var currentTileHoverColumn = -1;
 //State
 var tileSetState;
 var screenState;
-var animation = Array(2).fill().map(() => Array(2).fill().map(() => Array(2)
-  .fill({
+var currentAnimation = "default";
+var allAnimations = new Map();
+allAnimations.set(currentAnimation, Array(2).fill().map(() => Array(2).fill().map(() => Array(2)
+  .fill().map(() => ({
       tileRow: 0,
       tileColumn: 0
-    })));
+    })))));
+    
+allAnimations.set("default2", Array(2).fill().map(() => Array(2).fill().map(() => Array(3)
+  .fill().map(() => ({
+      tileRow: 0,
+      tileColumn: 1
+    })))));
+    
+var animation = allAnimations.get(currentAnimation);
 
 ;//TODO make this multiple
 
@@ -101,6 +111,33 @@ function init() {
   loadCurrentTileIntoEditor();
   highlightCurrentTile();
   
+  //Animation stuff
+  let animationSelector = document.getElementById('animationSelecter');
+
+  allAnimations.forEach((value, key, map) => {
+    let optionElem = document.createElement('option');
+    optionElem.textContent = key;
+    animationSelector.appendChild(optionElem);
+  });
+  
+  animationSelector.options[1].selected = true;
+  currentAnimation = animationSelecter.options[1].textContent;
+  animation = allAnimations.get(currentAnimation);
+  loadCurrentAnimation();
+  
+  animationSelector.addEventListener("change", function() {
+    currentAnimation = this.value;
+    animation = allAnimations.get(currentAnimation);
+    
+    loadCurrentAnimation();
+  });
+  
+  setAnimationInterval(600);
+  
+  $('#p0c0').click();
+}
+
+function loadCurrentAnimation() {
   for(var i = 0 ; i < animation.length ; i++) {
     //TODO Should be creating these dynamically for when more are needed
     var animationCanvas = document.getElementById("animationCanvas" + i);
@@ -121,10 +158,6 @@ function init() {
     }
    
   }
-  
-  setAnimationInterval(600);
-  
-  $('#p0c0').click();
 }
 
 var currentTimeBetweenFrames;
@@ -354,6 +387,7 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mouseout', f
   highlightCurrentTileHover();
 }, false);
 
+//Would be really nice if by hovering over a tile here, it would put a diff color block around the tile in the tileset that corresponds to the current tile here. Same for full screen editing.
 $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
   const animationNumber = $(this).attr('id').slice(-1);
   
@@ -363,10 +397,13 @@ $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
   const animColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
   const animRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
   
-  //todom Draw current tile here
-  copyTileIntoAnimationCanvas($(this)[0], animRow, animColumn, selectedRow, selectedColumn);
+  console.log("Setting animation " + animationNumber + " to row: " + animRow + " and column: " + animColumn);
   
-  //Draw current tile on animationCanvas
+  currentAnimation = animationSelecter.options[1].textContent;
+  animation[animationNumber][animRow][animColumn].tileRow = selectedRow;
+  animation[animationNumber][animRow][animColumn].tileColumn = selectedColumn;
+
+  copyTileIntoAnimationCanvas($(this)[0], animRow, animColumn, selectedRow, selectedColumn);
   copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0], 
     animRow, animColumn, selectedRow, selectedColumn);
   
