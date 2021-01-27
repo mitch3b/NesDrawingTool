@@ -280,13 +280,12 @@ function getTilesetNumber(number) {
 function switchCurrentPallette(number) {
   //Refresh Tileset Canvas
   currentPallette = number;
-  
-  //Update tile editor
-  let tileEditorTable = document.getElementById('tileEditorTable');
-  
+   
   loadCurrentTileIntoEditor();
   initTilesetCanvas();
   initScreenCanvas();
+  
+  $("#p" + currentPallette + "c" + currentColor).click();
 }
 
 function selectTile(row, column) {
@@ -670,18 +669,41 @@ function getFile(event) {
   }
 }
 
+
+function getStyle(el,styleProp) {
+    if (el.currentStyle)
+        return el.currentStyle[styleProp];
+
+    return document.defaultView.getComputedStyle(el,null)[styleProp]; 
+}
+
 function placeFileContent(file) {
 	readFileContent(file).then(content => {
     let vals = content.split(""); // convert to char array
     var i = 0;
 
     var palletteTable = document.getElementById("palletteTable");
-    for (let row of palletteTable.rows) {
-      for(let cell of row.cells) {
-        if(!cell.classList.contains("palletteBuffer")) {
-          updateColor(cell.classList, 'color-' + vals[i]);
-          i++;
+    let row = palletteTable.rows[0];
+    var tmpCountX = 0;
+    var tmpCountY = 0;;
+      
+    for (var k = 0; k < row.cells.length ; k++) {
+      
+      let cell = row.cells[k];
+      
+      if(!cell.classList.contains("palletteBuffer")) {
+        colorClasses[tmpCountY][tmpCountX] = 'color-' + vals[i];
+        updateColor(cell.classList, 'color-' + vals[i]);
+        colors[tmpCountY][tmpCountX] = getStyle(cell, 'backgroundColor');
+                
+        tmpCountX++;
+        
+        if(tmpCountX > 3) {
+          tmpCountX = 0;
+          tmpCountY++;
         }
+        
+        i++;
       }
     }
     
@@ -712,6 +734,8 @@ function placeFileContent(file) {
       }
     }
 
+
+//todom
     initTilesetCanvas();
     initScreenCanvas();
     
@@ -765,6 +789,8 @@ function getStateAsString() {
   var result = "";
   var palletteTable = document.getElementById("palletteTable");
   var i = 0;
+  
+  //TODO use state object, not css attributes
   for (let row of palletteTable.rows) {
     for(let cell of row.cells) {
       if(!cell.classList.contains("palletteBuffer")) {
