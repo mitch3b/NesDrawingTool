@@ -1,8 +1,6 @@
 var pressedKeys = {};
 var currentPallette = 0;
 var currentColor = 0;
-var tileSetState;
-var screenState;
 var colors = Array(4).fill().map(() => Array(4));
 var colorClasses = Array(4).fill().map(() => Array(4));
 var selectedRow = 0;
@@ -11,6 +9,17 @@ var currentFullScreenTileRow = -1;
 var currentFullScreenTileColumn = -1;
 var currentTileHoverRow = -1;
 var currentTileHoverColumn = -1;
+
+//State
+var tileSetState;
+var screenState;
+var animation = [{
+    tileRow: 0,
+    tileColumn: 0
+  }, {
+    tileRow: 0,
+    tileColumn: 1
+  }];//TODO make this multiple
 
 const NUM_TILES_X = 16;
 const NUM_TILES_Y = NUM_TILES_X;
@@ -90,7 +99,8 @@ function init() {
   loadCurrentTileIntoEditor();
   highlightCurrentTile();
   
-  for(var i = 0 ; i < 2 ; i++) {
+  for(var i = 0 ; i < animation.length ; i++) {
+    //TODO Should be creating these dynamically for when more are needed
     var animationCanvas = document.getElementById("animationCanvas" + i);
     var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
     animationCanvas.height = NUM_PIXELS_PER_TILE_Y*NUM_PIXELS_PER_CANVAS_PIXEL;
@@ -100,12 +110,9 @@ function init() {
     
     var ctx = animationCanvas.getContext('2d');
     var ctx2 = animationDrawingCanvas.getContext('2d');
-  
-    //TODO fill this with actual tile info, keep it up to date and consider making it more than 1 tile
-    ctx.fillStyle = (i === 1) ? "red" : "blue";
-    ctx.fillRect(0, 0, animationCanvas.width, animationCanvas.height);
-    ctx2.fillStyle = (i === 1) ? "red" : "blue";
-    ctx2.fillRect(0, 0, animationCanvas.width, animationCanvas.height);
+    
+    copyTileIntoAnimationCanvas(animationCanvas, animation[i].tileRow, animation[i].tileColumn);
+    copyTileIntoAnimationCanvas(animationDrawingCanvas, animation[i].tileRow, animation[i].tileColumn);
   }
   
   setAnimationInterval(600);
@@ -344,17 +351,17 @@ $('[id^="animationDrawingCanvas"]').mousedown(function() {
   const animationNumber = $(this).attr('id').slice(-1);
   
   //todom Draw current tile here
-  copyTileIntoAnimationCanvas($(this)[0]);
+  copyTileIntoAnimationCanvas($(this)[0], selectedRow, selectedColumn);
   
   //Draw current tile on animationCanvas
-  copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0]);
+  copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0], selectedRow, selectedColumn);
   
   //TODO still need to update these if we change pallette or the tile changes
   //TODO should really be storing animations in a datastruct and loading them from one (and saving)
   //TODO need to update the timer
 });
 
-function copyTileIntoAnimationCanvas(canvas) {
+function copyTileIntoAnimationCanvas(canvas, tilesetRow, tilesetColumn) {
   var tileData = tileSetState[selectedRow][selectedColumn].tileData
   var ctx = canvas.getContext('2d');
           
@@ -565,10 +572,28 @@ function drawTileEditorTable() {
     //TODO only really have to update the pixel changed
     fillTilesetTile(selectedRow, selectedColumn, tileData, currentPallette);
     
-    //TODO more efficient ways to redraw the screen
+    //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
     initScreenCanvas();
+    
+    updatedTileForAnimation(selectedRow, selectedColumn);
   });
 
+}
+
+//TODO could even take in the exact pixel that changed too
+function updatedTileForAnimation(tileRow, tileColumn) {
+  for(var i = 0 ; i < animation.length ; i++) {
+    if(animation[i].tileRow === tileRow && animation[i].tileColumn === tileColumn) {
+      var animationCanvas = document.getElementById("animationCanvas" + i);
+      var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
+      
+      var ctx = animationCanvas.getContext('2d');
+      var ctx2 = animationDrawingCanvas.getContext('2d');
+      
+      copyTileIntoAnimationCanvas(animationCanvas, animation[i].tileRow, animation[i].tileColumn);
+      copyTileIntoAnimationCanvas(animationDrawingCanvas, animation[i].tileRow, animation[i].tileColumn);
+    }
+  }
 }
 
 
