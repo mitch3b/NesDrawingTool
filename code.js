@@ -92,24 +92,40 @@ function init() {
   
   for(var i = 0 ; i < 2 ; i++) {
     var animationCanvas = document.getElementById("animationCanvas" + i);
+    var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
     animationCanvas.height = NUM_PIXELS_PER_TILE_Y*NUM_PIXELS_PER_CANVAS_PIXEL;
     animationCanvas.width = NUM_PIXELS_PER_TILE_X*NUM_PIXELS_PER_CANVAS_PIXEL;
+    animationDrawingCanvas.height = animationCanvas.height;
+    animationDrawingCanvas.width = animationCanvas.width;
     
     var ctx = animationCanvas.getContext('2d');
+    var ctx2 = animationDrawingCanvas.getContext('2d');
   
     //TODO fill this with actual tile info, keep it up to date and consider making it more than 1 tile
     ctx.fillStyle = (i === 1) ? "red" : "blue";
     ctx.fillRect(0, 0, animationCanvas.width, animationCanvas.height);
+    ctx2.fillStyle = (i === 1) ? "red" : "blue";
+    ctx2.fillRect(0, 0, animationCanvas.width, animationCanvas.height);
   }
   
-  let animation1Z = 1000;
-  let timer = setInterval(function() {
-    var animationCanvas = document.getElementById("animationCanvas0");
-    animationCanvas.style.zIndex = (animationCanvas.style.zIndex === "0") ? "1" : "0";
-
-  }, 1000);
+  setAnimationInterval(600);
   
   $('#p0c0').click();
+}
+
+var currentTimeBetweenFrames;
+var timer;
+function setAnimationInterval(timeBetweenFrames) {
+  currentTimeBetweenFrames = timeBetweenFrames
+  
+  if(timer !== undefined) {
+    clearInterval(timer);
+  }
+  
+  timer = setInterval(function() {
+    var animationCanvas = document.getElementById("animationCanvas0");
+    animationCanvas.style.zIndex = (animationCanvas.style.zIndex === "0") ? "1" : "0";
+  }, timeBetweenFrames);
 }
 
 function initTilesetCanvas() {  
@@ -203,6 +219,9 @@ window.onkeydown = function(e) {
     case 87: selectTile(getTilesetNumber(selectedRow - 1), selectedColumn); break; // w - up
     case 68: selectTile(selectedRow, getTilesetNumber(selectedColumn + 1)); break; // d - right
     case 83: selectTile(getTilesetNumber(selectedRow + 1), selectedColumn); break; // s - down
+    
+    case 82:   setAnimationInterval(currentTimeBetweenFrames - 200); break; // r
+    case 84:   setAnimationInterval(currentTimeBetweenFrames + 200); break; // t
   }
 }
 
@@ -321,6 +340,32 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mouseout', f
   highlightCurrentTileHover();
 }, false);
 
+$('[id^="animationDrawingCanvas"]').mousedown(function() {
+  const animationNumber = $(this).attr('id').slice(-1);
+  
+  //todom Draw current tile here
+  copyTileIntoAnimationCanvas($(this)[0]);
+  
+  //Draw current tile on animationCanvas
+  copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0]);
+  
+  //TODO still need to update these if we change pallette or the tile changes
+  //TODO should really be storing animations in a datastruct and loading them from one (and saving)
+  //TODO need to update the timer
+});
+
+function copyTileIntoAnimationCanvas(canvas) {
+  var tileData = tileSetState[selectedRow][selectedColumn].tileData
+  var ctx = canvas.getContext('2d');
+          
+  for(var i = 0 ; i < tileData.length ; i++) {
+    for(var j = 0 ; j < tileData[i].length ; j++) {
+        ctx.fillStyle = colors[currentPallette][tileData[i][j]];
+        ctx.fillRect(j*NUM_PIXELS_PER_CANVAS_PIXEL, i*NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL);
+    }
+  }
+}
+
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
   const position = getCursorPosition($(this)[0], e)
   console.log("Clicked on fullscreen canvas at: " + JSON.stringify(position));
@@ -385,6 +430,7 @@ function updateJustTile(row, column) {
   for(var i = 0 ; i < NUM_TILES_PER_PALLETTE ; i++) {
     for(var j = 0 ; j < NUM_TILES_PER_PALLETTE ; j++) { 
       var screenTile = screenState[startRow + i][startColumn + j];
+      //TODO i think we just need this without input row/column. no loops
       fillScreenTile(startRow + i, startColumn + j, screenTile);
     }
   }
