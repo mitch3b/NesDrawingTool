@@ -374,7 +374,7 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', 
     //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
     initScreenCanvas();
     
-    updatedTileForAnimation(selectedRow, selectedColumn);
+    updatedTileForAnimation(tileRow, tileColumn);
   }
   else {
     console.log("load highlighted tile into the editor...");
