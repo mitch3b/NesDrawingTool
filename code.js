@@ -225,7 +225,7 @@ function fillScreenTile(row, column, screenTile){
 
 function loadCurrentTileIntoEditor() {
   console.log("loading current tile into editor...");
-  
+
   var tileData = tileSetState[selectedRow][selectedColumn].tileData;
   var tileEditorTable = document.getElementById('tileEditorTable');
   
@@ -350,17 +350,42 @@ function getCursorPosition(canvas, event) {
 }
 
 document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', function(e) {
-    const position = getCursorPosition($(this)[0], e)
-    console.log("Clicked on tileset canvas at: " + JSON.stringify(position));
+  const position = getCursorPosition($(this)[0], e)
+  console.log("Clicked on tileset canvas at: " + JSON.stringify(position));
+  
+  const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
+  const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
     
-    const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-    const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  // If holding shift
+  if(pressedKeys[16]) {
+    console.log("Copying selected tile into highlighted tile...");
     
+    var tileDataToCopy = tileSetState[selectedRow][selectedColumn].tileData;
+    var tileDestination = tileSetState[tileRow][tileColumn].tileData;
+          
+    for(var i = 0 ; i < tileDestination.length ; i++) {
+      for(var j = 0 ; j < tileDestination[i].length ; j++) {
+        tileDestination[i][j] = tileDataToCopy[i][j];
+      }
+    }
+    
+    fillTilesetTile(tileRow, tileColumn, tileDestination, currentPallette);
+    
+    //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
+    initScreenCanvas();
+    
+    updatedTileForAnimation(selectedRow, selectedColumn);
+  }
+  else {
+    console.log("load highlighted tile into the editor...");
+    
+    // load current tile into editor and select it    
     selectedRow = tileRow;
     selectedColumn = tileColumn;
     
     highlightCurrentTile();
     loadCurrentTileIntoEditor();
+  }
 })
 
 $('#tilesetHighlightCanvas').mousemove('mouseover', function(e) {
@@ -735,7 +760,6 @@ function placeFileContent(file) {
     }
 
 
-//todom
     initTilesetCanvas();
     initScreenCanvas();
     

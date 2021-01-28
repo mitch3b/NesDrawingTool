@@ -36,25 +36,43 @@ button {
   padding: 10px;
 }
 
+.content {
+  width: 95%;
+  height: 1200px;
+  background: aqua;
+  margin: auto;
+  padding: 0px;
+}
+
+.leftStuff {
+  width: 40%;
+  float: left;
+}
+
+.rightStuff {
+  width: 60%;
+  float: right;
+}
+
 canvas {
-    border: 6px solid black;
+  border: 6px solid black;
 }  
 
 #animationCanvas0,#animationCanvas1{
-    position:absolute; top:50px; left:0px;
+    position:absolute; top:100px; left:0px;
 }
 
 #animationDrawingCanvas0,#animationDrawingCanvas1{
-    position:relative; top:100px;
+    position:relative; top:120px;
 }
 
 #animationCanvasDiv {
   position: relative;
-  height: 200px; //Not the way to do it but good enough for now
+  height: 300px; //Not the way to do it but good enough for now
 }
 
 #tilesetHighlightCanvas,#tilesetCanvas{
-    position:absolute; top:50px; left:0px;
+    position:absolute; top:30px; left:0px;
 }
 
 #tilesetCanvasDiv {
