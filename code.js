@@ -189,7 +189,19 @@ function initTilesetCanvas() {
 
 function fillTilesetTile(row, column, tileData, pallette) {
   var tilesetCanvas = document.getElementById("tilesetCanvas");
-  var ctx = tilesetCanvas.getContext('2d');
+  
+  fillTile(tilesetCanvas, row, column, tileData, pallette)
+}
+
+function fillScreenTile(row, column, screenTile){
+  var screenCanvas = document.getElementById("fullScreenCanvas");
+  var tileData = tileSetState[screenTile.tileRow][screenTile.tileColumn].tileData
+  
+  fillTile(screenCanvas, row, column, tileData, screenTile.pallette)
+}
+
+function fillTile(canvas, row, column, tileData, pallette) {
+  var ctx = canvas.getContext('2d');
   
   var startRow = TILE_WIDTH_PIXELS*row;
   var startColumn = TILE_HEIGHT_PIXELS*column;
@@ -197,27 +209,6 @@ function fillTilesetTile(row, column, tileData, pallette) {
   for(var i = 0 ; i < tileData.length ; i++) {
     for(var j = 0 ; j < tileData[i].length ; j++) {
         ctx.fillStyle = colors[pallette][tileData[i][j]];
-        ctx.fillRect(startColumn + j*NUM_PIXELS_PER_CANVAS_PIXEL, startRow + i*NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL);
-    }
-  }
-}
-
-function fillScreenTile(row, column, screenTile){
-  var screenCanvas = document.getElementById("fullScreenCanvas");
-  var ctx = screenCanvas.getContext('2d');
-  
-  var startRow = TILE_WIDTH_PIXELS*row;
-  var startColumn = TILE_HEIGHT_PIXELS*column;
-
-  if(tileSetState === undefined || screenTile === undefined) {
-    console.log("FUDGE");
-  }
-  
-  var tileData = tileSetState[screenTile.tileRow][screenTile.tileColumn].tileData
-          
-  for(var i = 0 ; i < tileData.length ; i++) {
-    for(var j = 0 ; j < tileData[i].length ; j++) {
-        ctx.fillStyle = colors[screenTile.pallette][tileData[i][j]];
         ctx.fillRect(startColumn + j*NUM_PIXELS_PER_CANVAS_PIXEL, startRow + i*NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL);
     }
   }
@@ -438,17 +429,8 @@ $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
 
 function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, tilesetColumn) {
   var tileData = tileSetState[tilesetRow][tilesetColumn].tileData
-  var ctx = canvas.getContext('2d');
   
-  var startRow = animRow*TILE_HEIGHT_PIXELS;
-  var startColumn = animColumn*TILE_WIDTH_PIXELS;
-  
-  for(var i = 0 ; i < tileData.length ; i++) {
-    for(var j = 0 ; j < tileData[i].length ; j++) {
-        ctx.fillStyle = colors[currentPallette][tileData[i][j]];
-        ctx.fillRect(startColumn + j*NUM_PIXELS_PER_CANVAS_PIXEL, startRow + i*NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL, NUM_PIXELS_PER_CANVAS_PIXEL);
-    }
-  }
+  fillTile(canvas, animRow, animColumn, tileData, currentPallette);
 }
 
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
