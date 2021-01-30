@@ -287,40 +287,44 @@ function selectTile(row, column) {
 
 function highlightCurrentTile() {
   var tilesetHighlightCanvas = document.getElementById("tilesetHighlightCanvas");
-  var ctx = tilesetHighlightCanvas.getContext("2d");
-  ctx.strokeStyle = "blue";
-  ctx.clearRect(0, 0, tilesetHighlightCanvas.width, tilesetHighlightCanvas.height);
-  ctx.beginPath();
-  ctx.rect(selectedColumn*TILE_WIDTH_PIXELS, selectedRow*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
-  ctx.stroke();
+  
+  highlightTile(tilesetHighlightCanvas, selectedRow, selectedColumn, "blue", true);
 }
 
 function highlightCurrentTileHover(row, column) {
   //Clear everything but the already clicked tile  
   highlightCurrentTile();
-    
+  
   var tilesetHighlightCanvas = document.getElementById("tilesetHighlightCanvas");
-  var ctx = tilesetHighlightCanvas.getContext("2d");
-  ctx.strokeStyle = "red";
-  ctx.beginPath();
-  ctx.rect(column*TILE_WIDTH_PIXELS, row*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
-  ctx.stroke();
+  highlightTile(tilesetHighlightCanvas, row, column, "red", false);
 }
 
-function highlightCurrentFullScreenTile() {
-  var tilesetHighlightCanvas = document.getElementById("fullScreenHighlightCanvas");
-  var ctx = tilesetHighlightCanvas.getContext("2d");
-  ctx.strokeStyle = "red";
-  ctx.clearRect(0, 0, tilesetHighlightCanvas.width, tilesetHighlightCanvas.height);
-  ctx.beginPath();
-  ctx.rect(currentFullScreenTileColumn*TILE_WIDTH_PIXELS, currentFullScreenTileRow*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
-  ctx.stroke();
+function highlightCurrentFullScreenTile() {  
+  var fullScreenHighlightCanvas = document.getElementById("fullScreenHighlightCanvas");
+  
+  if(currentFullScreenTileRow == -1) {
+    fullScreenHighlightCanvas.getContext("2d").clearRect(0, 0, fullScreenHighlightCanvas.width, fullScreenHighlightCanvas.height);
+    return;
+  }
+  
+  highlightTile(fullScreenHighlightCanvas, currentFullScreenTileRow, currentFullScreenTileColumn, "red", true);
   
   // Show which tile we're using on the tileset canvas
-  const tileOnFullScreen = getTileUnderCursor(tilesetHighlightCanvas, event);
+  const tileOnFullScreen = getTileUnderCursor(fullScreenHighlightCanvas, event);
   var screenTile = screenState[tileOnFullScreen.tileRow][tileOnFullScreen.tileColumn];
   
   highlightCurrentTileHover(screenTile.tileRow, screenTile.tileColumn);
+}
+
+function highlightTile(canvas, row, column, color, clearRect) {
+  var ctx = canvas.getContext("2d");
+  ctx.strokeStyle = color;
+  if(clearRect) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.beginPath();
+  ctx.rect(column*TILE_WIDTH_PIXELS, row*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
+  ctx.stroke();
 }
 
 // For when fetching element using jquery (which accesses class list differently)
@@ -345,13 +349,19 @@ function getCursorPosition(canvas, event) {
   }
 }
 
+//todom either this is wrong or canvas's being drawn wrong cos its possible to select one tile outside the scope
 function getTileUnderCursor(canvas, event) {
   const rect = canvas.getBoundingClientRect()
-  const x = Math.floor(event.clientX - rect.left);
-  const y = Math.floor(event.clientY - rect.top);
+  //Make sure its on the canvas
+  const x = Math.min(Math.floor(event.clientX - rect.left), canvas.width - 1);
+  const y = Math.min(Math.floor(event.clientY - rect.top), canvas.height - 1);
   
-  const tileColumn = Math.floor(x/TILE_WIDTH_PIXELS);
-  const tileRow = Math.floor(y/TILE_HEIGHT_PIXELS);
+  const tileColumn = Math.max(0, Math.floor(x/TILE_WIDTH_PIXELS));
+  const tileRow =Math.max(0, Math.floor(y/TILE_HEIGHT_PIXELS));
+  
+  if(tileRow < 0 || tileColumn < 0) {
+    console.log("UH OH");
+  }
   
   return {
     tileRow,
@@ -449,6 +459,37 @@ function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, ti
   fillTile(canvas, animRow, animColumn, tileData, pallette);
 }
 
+$('[id^="animationDrawingCanvas"]').mousemove('mouseover', function(e) {
+  const position = getTileUnderCursor($(this)[0], e)  
+  const tileColumn = position.tileColumn;
+  const tileRow = position.tileRow;
+  
+
+  // Show which tile we're using on the tileset canvas
+  const animationNumber = $(this).attr('id').slice(-1);
+  const animColumn = position.tileColumn;
+  const animRow = position.tileRow;
+  
+  highlightCurrentTileHover(animation[animationNumber][animRow][animColumn].tileRow, animation[animationNumber][animRow][animColumn].tileColumn);
+});
+
+function getElementsStartsWithId( id ) {
+  var children = document.body.getElementsByTagName('*');
+  var elements = [], child;
+  for (var i = 0, length = children.length; i < length; i++) {
+    child = children[i];
+    if (child.id.substr(0, id.length) == id)
+      elements.push(child);
+  }
+  return elements;
+}
+
+getElementsStartsWithId('animationDrawingCanvas').forEach(element => element.addEventListener('mouseout', function(e) {
+  console.log("No longer mouse on animation");
+  
+  highlightCurrentTile();//Clear the one that we set for hover over
+}, false));
+
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
   const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on fullscreen canvas at: " + JSON.stringify(position));
@@ -490,6 +531,7 @@ document.getElementById('fullScreenHighlightCanvas').addEventListener('mouseout'
   currentFullScreenTileColumn = -1;
   
   highlightCurrentFullScreenTile();
+  highlightCurrentTile();//Clear the one that we set for hover over
 }, false);
 
 function updatePallette(row, column) {
