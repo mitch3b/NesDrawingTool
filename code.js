@@ -18,18 +18,18 @@ var allAnimations = new Map();
 allAnimations.set(currentAnimation, Array(2).fill().map(() => Array(2).fill().map(() => Array(2)
   .fill().map(() => ({
       tileRow: 0,
-      tileColumn: 0
+      tileColumn: 0,
+      pallette: 0
     })))));
     
 allAnimations.set("default2", Array(2).fill().map(() => Array(2).fill().map(() => Array(3)
   .fill().map(() => ({
       tileRow: 0,
-      tileColumn: 1
+      tileColumn: 1,
+      pallette: 0
     })))));
     
 var animation = allAnimations.get(currentAnimation);
-
-;//TODO make this multiple
 
 const NUM_TILES_X = 16;
 const NUM_TILES_Y = NUM_TILES_X;
@@ -55,8 +55,6 @@ function init() {
     for(var j = 0 ; j < tileSetState[i].length ; j++) {
       var tileData = Array(NUM_PIXELS_PER_TILE_Y).fill().map(() => Array(NUM_PIXELS_PER_TILE_X).fill(0));
       tileSetState[i][j] = {
-        row: i, //TODO do we need this
-        column: j, //TODO do we need this
         tileData: tileData      
       }
     }
@@ -152,8 +150,8 @@ function loadCurrentAnimation() {
     
     for(var j = 0; j < animation[i].length ; j++) {
       for(var k = 0; k < animation[i][j].length ; k++) {
-        copyTileIntoAnimationCanvas(animationCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn);
-        copyTileIntoAnimationCanvas(animationDrawingCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn);
+        copyTileIntoAnimationCanvas(animationCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn, animation[i][j][k].pallette);
+        copyTileIntoAnimationCanvas(animationDrawingCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn, animation[i][j][k].pallette);
       }
     }
    
@@ -417,20 +415,17 @@ $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
   currentAnimation = animationSelecter.options[1].textContent;
   animation[animationNumber][animRow][animColumn].tileRow = selectedRow;
   animation[animationNumber][animRow][animColumn].tileColumn = selectedColumn;
+  animation[animationNumber][animRow][animColumn].pallette = currentPallette;
 
-  copyTileIntoAnimationCanvas($(this)[0], animRow, animColumn, selectedRow, selectedColumn);
+  copyTileIntoAnimationCanvas($(this)[0], animRow, animColumn, selectedRow, selectedColumn, currentPallette);
   copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0], 
-    animRow, animColumn, selectedRow, selectedColumn);
-  
-  //TODO still need to update these if we change pallette or the tile changes
-  //TODO should really be storing animations in a datastruct and loading them from one (and saving)
-  //TODO need to update the timer
+    animRow, animColumn, selectedRow, selectedColumn, currentPallette);
 });
 
-function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, tilesetColumn) {
+function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, tilesetColumn, pallette) {
   var tileData = tileSetState[tilesetRow][tilesetColumn].tileData
   
-  fillTile(canvas, animRow, animColumn, tileData, currentPallette);
+  fillTile(canvas, animRow, animColumn, tileData, pallette);
 }
 
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
@@ -489,18 +484,10 @@ function updatePallette(row, column) {
   }
 }
 
-//TODO could probably just update the pallette field above or use a param
 function updateJustTile(row, column) {
-  var startRow = getClosestPallette(row);
-  var startColumn = getClosestPallette(column);
-  
-  for(var i = 0 ; i < NUM_TILES_PER_PALLETTE ; i++) {
-    for(var j = 0 ; j < NUM_TILES_PER_PALLETTE ; j++) { 
-      var screenTile = screenState[startRow + i][startColumn + j];
-      //TODO i think we just need this without input row/column. no loops
-      fillScreenTile(startRow + i, startColumn + j, screenTile);
-    }
-  }
+  var screenTile = screenState[row][column];
+
+  fillScreenTile(row, column, screenTile);
 }
 
 function getClosestPallette(num) {
@@ -649,8 +636,8 @@ function updatedTileForAnimation(tileRow, tileColumn) {
           var animationCanvas = document.getElementById("animationCanvas" + i);
           var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
           
-          copyTileIntoAnimationCanvas(animationCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn);
-          copyTileIntoAnimationCanvas(animationDrawingCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn);
+          copyTileIntoAnimationCanvas(animationCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn, animation[i][j][k].pallette);
+          copyTileIntoAnimationCanvas(animationDrawingCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn, animation[i][j][k].pallette);
         }
       }
     }
