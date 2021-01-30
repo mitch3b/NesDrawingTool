@@ -527,6 +527,17 @@ $('.colortable td').click(function(){
   
   colors[pallette][color] = $('#chosen-color').css('background-color');
   colorClasses[pallette][color] = colorId;
+    
+  if(color == 0) {
+    // First color is the same across all
+    for(var i = 0 ; i < 4 ; i++) {
+      colors[i][color] = $('#chosen-color').css('background-color');
+      colorClasses[i][color] = colorId;
+      
+      var currentCell = $('#p' + i + 'c' + color)[0];
+      updateColor(currentCell.classList, colorId);
+    }
+  }
   
   //Make sure everything reflects this new color
   loadCurrentTileIntoEditor();
