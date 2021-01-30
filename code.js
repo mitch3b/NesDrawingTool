@@ -288,7 +288,7 @@ function selectTile(row, column) {
 function highlightCurrentTile() {
   var tilesetHighlightCanvas = document.getElementById("tilesetHighlightCanvas");
   var ctx = tilesetHighlightCanvas.getContext("2d");
-  ctx.strokeStyle = "black";
+  ctx.strokeStyle = "blue";
   ctx.clearRect(0, 0, tilesetHighlightCanvas.width, tilesetHighlightCanvas.height);
   ctx.beginPath();
   ctx.rect(selectedColumn*TILE_WIDTH_PIXELS, selectedRow*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
@@ -303,17 +303,24 @@ function highlightCurrentTileHover(row, column) {
   var ctx = tilesetHighlightCanvas.getContext("2d");
   ctx.strokeStyle = "red";
   ctx.beginPath();
-  ctx.rect(currentTileHoverColumn*TILE_WIDTH_PIXELS, currentTileHoverRow*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
+  ctx.rect(column*TILE_WIDTH_PIXELS, row*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
   ctx.stroke();
 }
 
 function highlightCurrentFullScreenTile() {
   var tilesetHighlightCanvas = document.getElementById("fullScreenHighlightCanvas");
   var ctx = tilesetHighlightCanvas.getContext("2d");
+  ctx.strokeStyle = "red";
   ctx.clearRect(0, 0, tilesetHighlightCanvas.width, tilesetHighlightCanvas.height);
   ctx.beginPath();
   ctx.rect(currentFullScreenTileColumn*TILE_WIDTH_PIXELS, currentFullScreenTileRow*TILE_HEIGHT_PIXELS, TILE_WIDTH_PIXELS, TILE_HEIGHT_PIXELS);
   ctx.stroke();
+  
+  // Show which tile we're using on the tileset canvas
+  const tileOnFullScreen = getTileUnderCursor(tilesetHighlightCanvas, event);
+  var screenTile = screenState[tileOnFullScreen.tileRow][tileOnFullScreen.tileColumn];
+  
+  highlightCurrentTileHover(screenTile.tileRow, screenTile.tileColumn);
 }
 
 // For when fetching element using jquery (which accesses class list differently)
@@ -338,12 +345,26 @@ function getCursorPosition(canvas, event) {
   }
 }
 
-document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', function(e) {
-  const position = getCursorPosition($(this)[0], e)
-  console.log("Clicked on tileset canvas at: " + JSON.stringify(position));
+function getTileUnderCursor(canvas, event) {
+  const rect = canvas.getBoundingClientRect()
+  const x = Math.floor(event.clientX - rect.left);
+  const y = Math.floor(event.clientY - rect.top);
   
-  const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-  const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  const tileColumn = Math.floor(x/TILE_WIDTH_PIXELS);
+  const tileRow = Math.floor(y/TILE_HEIGHT_PIXELS);
+  
+  return {
+    tileRow,
+    tileColumn
+  }
+}
+
+document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', function(e) {
+  const position = getTileUnderCursor($(this)[0], e)
+  console.log("Clicked on tileset canvas tile: " + JSON.stringify(position));
+  
+  const tileColumn = position.tileColumn;;
+  const tileRow = position.tileRow;
     
   // If holding shift
   if(pressedKeys[16]) {
@@ -378,16 +399,16 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', 
 })
 
 $('#tilesetHighlightCanvas').mousemove('mouseover', function(e) {
-  const position = getCursorPosition($(this)[0], e)
+  const position = getTileUnderCursor($(this)[0], e)
   
-  const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-  const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  const tileColumn = position.tileColumn;
+  const tileRow = position.tileRow;
   
   if(currentTileHoverRow != tileRow || currentTileHoverColumn != tileColumn) {
     currentTileHoverRow = tileRow;
     currentTileHoverColumn = tileColumn;
     
-    highlightCurrentTileHover();
+    highlightCurrentTileHover(currentTileHoverRow, currentTileHoverColumn);
   }
 });
 
@@ -397,7 +418,7 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mouseout', f
   currentTileHoverRow = -1;
   currentTileHoverColumn = -1;
   
-  highlightCurrentTileHover();
+  highlightCurrentTileHover(currentTileHoverRow, currentTileHoverColumn);
 }, false);
 
 //Would be really nice if by hovering over a tile here, it would put a diff color block around the tile in the tileset that corresponds to the current tile here. Same for full screen editing.
@@ -405,10 +426,10 @@ $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
   const animationNumber = $(this).attr('id').slice(-1);
   
   //get which tile
-  const position = getCursorPosition($(this)[0], e)
+  const position = getTileUnderCursor($(this)[0], e)
   
-  const animColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-  const animRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  const animColumn = position.tileColumn;
+  const animRow = position.tileRow;
   
   console.log("Setting animation " + animationNumber + " to row: " + animRow + " and column: " + animColumn);
   
@@ -429,11 +450,11 @@ function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, ti
 }
 
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
-  const position = getCursorPosition($(this)[0], e)
+  const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on fullscreen canvas at: " + JSON.stringify(position));
   
-  const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-  const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  const tileColumn = position.tileColumn;
+  const tileRow = position.tileRow;
   
   if(placeTile) {  
     var screenTile = screenState[tileRow][tileColumn];
@@ -450,9 +471,9 @@ document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown
 });
 
 $('#fullScreenHighlightCanvas').mousemove('mouseover', function(e) {
-  const position = getCursorPosition($(this)[0], e)  
-  const tileColumn = Math.floor(position.x/TILE_WIDTH_PIXELS);
-  const tileRow = Math.floor(position.y/TILE_HEIGHT_PIXELS);
+  const position = getTileUnderCursor($(this)[0], e)  
+  const tileColumn = position.tileColumn;
+  const tileRow = position.tileRow;
   
   if(currentFullScreenTileRow != tileRow || currentFullScreenTileColumn != tileColumn) {
     currentFullScreenTileRow = tileRow;
