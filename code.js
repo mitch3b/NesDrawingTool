@@ -10,6 +10,8 @@ var currentFullScreenTileColumn = -1;
 var currentTileHoverRow = -1;
 var currentTileHoverColumn = -1;
 
+var undoStack = new Array();
+
 //State
 var tileSetState;
 var screenState;
@@ -256,9 +258,28 @@ window.onkeydown = function(e) {
     case 68: selectTile(selectedRow, getTilesetNumber(selectedColumn + 1)); break; // d - right
     case 83: selectTile(getTilesetNumber(selectedRow + 1), selectedColumn); break; // s - down
     
-    case 82:   setAnimationInterval(currentTimeBetweenFrames - 200); break; // r
-    case 84:   setAnimationInterval(currentTimeBetweenFrames + 200); break; // t
+    case 82: setAnimationInterval(currentTimeBetweenFrames - 200); break; // r
+    case 84: setAnimationInterval(currentTimeBetweenFrames + 200); break; // t
+    
+    case 90: if(pressedKeys[17]) {if(undoStack.length > 0) undo(undoStack.pop());} break; //ctl + z
   }
+}
+
+function undo(obj) {
+  console.log("undoing");
+  
+  switch(obj.funct) {
+    case "changePalletteColor": changePalletteColor(obj.palletteNum, obj.colorNum, obj.colorClass); break;
+  }
+  
+  /*
+  {
+    funct: "changePalletteColor,
+    palletteNum: palletteNum,
+    colorNum: colorNum,
+    colorClass: colorClass
+  }
+  */
 }
 
 // Makes sure the number is between 0 and 127
@@ -370,6 +391,7 @@ function getTileUnderCursor(canvas, event) {
 }
 
 document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', function(e) {
+  //TODO stack
   const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on tileset canvas tile: " + JSON.stringify(position));
   
@@ -433,6 +455,7 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mouseout', f
 
 //Would be really nice if by hovering over a tile here, it would put a diff color block around the tile in the tileset that corresponds to the current tile here. Same for full screen editing.
 $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
+  //TODO stack
   const animationNumber = $(this).attr('id').slice(-1);
   
   //get which tile
@@ -491,6 +514,7 @@ getElementsStartsWithId('animationDrawingCanvas').forEach(element => element.add
 }, false));
 
 document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown', function(e) {
+  //TODO stack
   const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on fullscreen canvas at: " + JSON.stringify(position));
   
@@ -580,33 +604,51 @@ $('.colortable td').click(function(){
   var colorId = $(this).attr('id');
   currentPalletteCell = $('.clickedColor')[0];
 
-  //Update the color class in pallette display
-  updateColor(currentPalletteCell.classList, colorId);
+  var palletteNum = $('.clickedColor')[0].id.charAt(1);
+  var colorNum = $('.clickedColor')[0].id.charAt(3);
+  
+  var prevColor = $('.clickedColor').css('background-color');
+  
   //Update the color class in the current color display
   updateColor($('#chosen-color')[0].classList, colorId);
   
-  var pallette = $('.clickedColor')[0].id.charAt(1);
-  var color = $('.clickedColor')[0].id.charAt(3);
+  //Make sure something will actuall change  
+  // Pop current state onto stack
+  undoStack.push({
+    funct: "changePalletteColor",
+    palletteNum: palletteNum,
+    colorNum: colorNum,
+    colorClass: colorClasses[palletteNum][colorNum]
+  })
   
-  colors[pallette][color] = $('#chosen-color').css('background-color');
-  colorClasses[pallette][color] = colorId;
+  changePalletteColor(palletteNum, colorNum, colorId);
+});
+
+function changePalletteColor(palletteNum, colorNum, colorClass) {  
+  // Change the pallette color
+  colors[palletteNum][colorNum] = $('#'+colorClass).css('background-color');
+  colorClasses[palletteNum][colorNum] = colorClass;
     
-  if(color == 0) {
+  if(colorNum == 0) {
     // First color is the same across all
     for(var i = 0 ; i < 4 ; i++) {
-      colors[i][color] = $('#chosen-color').css('background-color');
-      colorClasses[i][color] = colorId;
+      colors[i][colorNum] = $('#chosen-color').css('background-color');
+      colorClasses[i][colorNum] = colorClass;
       
-      var currentCell = $('#p' + i + 'c' + color)[0];
-      updateColor(currentCell.classList, colorId);
+      var currentCell = $('#p' + i + 'c' + colorNum)[0];
+      updateColor(currentCell.classList, colorClass);
     }
+  }
+  else {
+    var currentCell = $('#p' + palletteNum + 'c' + colorNum)[0];
+    updateColor(currentPalletteCell.classList, colorClass);
   }
   
   //Make sure everything reflects this new color
   loadCurrentTileIntoEditor();
   initTilesetCanvas();
   initScreenCanvas();
-});
+}
 
 // TODO don't think need this. should have max one class
 function updateColor(classList, newColorId) {
@@ -679,6 +721,7 @@ function drawTileEditorTable() {
   });
 
   $('#tileEditorTable td').click(function() {
+    //TODO stack
     var row = $(this).closest("tr").index();
     var column = $(this).closest("td").index();
     
@@ -926,15 +969,6 @@ function downloadToFile(content, filename, contentType) {
 
 	URL.revokeObjectURL(a.href);
 }
-
-//TODO these aren't used yet but keeping incase i do
-
-$("#canvasZoomIn").click(function() {
-  let width = document.getElementById('tilesetTable').rows[0].width;
-  $( '#tilesetTable td' ).each(function(){
-    let newSize = $(this).width()*1.1;
-  });
-});
 
 
 //TODO this mechanism is REALLY unintuitive but just want functionality working before getting feedback
