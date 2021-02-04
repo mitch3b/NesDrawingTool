@@ -270,16 +270,8 @@ function undo(obj) {
   
   switch(obj.funct) {
     case "changePalletteColor": changePalletteColor(obj.palletteNum, obj.colorNum, obj.colorClass); break;
+    case "changeTileColor": changeTileColor(obj.row, obj.column, obj.tileRow, obj.tileColumn, obj.colorNum); break;
   }
-  
-  /*
-  {
-    funct: "changePalletteColor,
-    palletteNum: palletteNum,
-    colorNum: colorNum,
-    colorClass: colorClass
-  }
-  */
 }
 
 // Makes sure the number is between 0 and 127
@@ -614,14 +606,16 @@ $('.colortable td').click(function(){
   
   //Make sure something will actuall change  
   // Pop current state onto stack
-  undoStack.push({
-    funct: "changePalletteColor",
-    palletteNum: palletteNum,
-    colorNum: colorNum,
-    colorClass: colorClasses[palletteNum][colorNum]
-  })
-  
-  changePalletteColor(palletteNum, colorNum, colorId);
+  if(colorClasses[palletteNum][colorNum] != colorId){
+    undoStack.push({
+      funct: "changePalletteColor",
+      palletteNum: palletteNum,
+      colorNum: colorNum,
+      colorClass: colorClasses[palletteNum][colorNum]
+    })
+    
+    changePalletteColor(palletteNum, colorNum, colorId);
+  }
 });
 
 function changePalletteColor(palletteNum, colorNum, colorClass) {  
@@ -721,27 +715,43 @@ function drawTileEditorTable() {
   });
 
   $('#tileEditorTable td').click(function() {
-    //TODO stack
     var row = $(this).closest("tr").index();
     var column = $(this).closest("td").index();
     
-    //Save the state
-    var tileData = tileSetState[selectedRow][selectedColumn].tileData;
-    tileData[row][column] = currentColor;
+    var formerColor = tileSetState[selectedRow][selectedColumn].tileData[row][column];
     
-    //Color it
-    updateJqueryColor($(this), colorClasses[currentPallette][currentColor]);
+    if(formerColor != currentColor) {
+      undoStack.push({
+        funct: "changeTileColor",
+        row: row,
+        column: column,
+        tileRow: selectedRow,
+        tileColumn: selectedColumn,
+        colorNum: formerColor
+      });
     
-    //Update Tileset Image
-    //TODO only really have to update the pixel changed
-    fillTilesetTile(selectedRow, selectedColumn, tileData, currentPallette);
-    
-    //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
-    initScreenCanvas();
-    
-    updatedTileForAnimation(selectedRow, selectedColumn);
+      //Save the state
+      changeTileColor(row, column, selectedRow, selectedColumn, currentColor)
+    }
   });
+}
 
+function changeTileColor(row, column, tileRow, tileColumn, colorNum) {
+  var tileData = tileSetState[tileRow][tileColumn].tileData;    
+  tileData[row][column] = colorNum;
+    
+  //Color it (TODOm THIS is wrong)
+  var tileEditorTable = document.getElementById('tileEditorTable');
+  updateColor(tileEditorTable.rows[row].cells[column].classList, colorClasses[currentPallette][colorNum]);
+  
+  //Update Tileset Image
+  //TODO only really have to update the pixel changed
+  fillTilesetTile(tileRow, tileColumn, tileData, currentPallette);
+  
+  //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
+  initScreenCanvas();
+  
+  updatedTileForAnimation(tileRow, tileColumn);
 }
 
 //TODO could even take in the exact pixel that changed too
