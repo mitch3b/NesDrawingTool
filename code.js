@@ -273,6 +273,7 @@ function undo(obj) {
     case "changeTileColor": changeTileColor(obj.row, obj.column, obj.tileRow, obj.tileColumn, obj.colorNum); break;
     case "copyTileToTileset": copyTileToTileset(obj.sourceRow, obj.sourceColumn, obj.destRow, obj.destColumn); break;
     case "putTileIntoAnimation": putTileIntoAnimation(obj.animationNumber, obj.animRow, obj.animColumn, obj.tileRow, obj.tileColumn, obj.pallette); break;
+    case "placeTileOnFullScreen": placeTileOnFullScreen(obj.placeTile, obj.placePallette, obj.tileRow, obj.tileColumn, obj.fullScreenRow, obj.fullScreenColumn, obj.pallette); break;
     default: console.log("ERROR: UNHANDLED UNDO FUNCTION: " + obj.funct);
   }
 }
@@ -462,7 +463,6 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mouseout', f
 
 //Would be really nice if by hovering over a tile here, it would put a diff color block around the tile in the tileset that corresponds to the current tile here. Same for full screen editing.
 $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
-  //TODO stack
   const animationNumber = $(this).attr('id').slice(-1);
   
   //get which tile
@@ -543,22 +543,43 @@ document.getElementById('fullScreenHighlightCanvas').addEventListener('mousedown
   const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on fullscreen canvas at: " + JSON.stringify(position));
   
-  const tileColumn = position.tileColumn;
-  const tileRow = position.tileRow;
+  const fullScreenColumn = position.tileColumn;
+  const fullScreenRow = position.tileRow;
   
+  var screenTile = screenState[fullScreenRow][fullScreenColumn];
+  
+  if((placeTile && (screenTile.tileColumn !== selectedColumn || screenTile.tileRow !== selectedRow)) ||
+     (placePallette && currentPallette !== screenTile.pallette)) {
+       
+    undoStack.push({
+      funct: "placeTileOnFullScreen",
+      placeTile: placeTile,
+      placePallette: placePallette,
+      tileRow: screenTile.tileRow,
+      tileColumn: screenTile.tileColumn,
+      fullScreenRow: fullScreenRow,
+      fullScreenColumn: fullScreenColumn,
+      pallette: screenTile.pallette
+    })
+    
+    placeTileOnFullScreen(placeTile, placePallette, selectedRow, selectedColumn, fullScreenRow, fullScreenColumn, currentPallette)
+  }
+});
+
+function placeTileOnFullScreen(placeTile, placePallette, tileRow, tileColumn, fullScreenRow, fullScreenColumn, pallette) {
   if(placeTile) {  
-    var screenTile = screenState[tileRow][tileColumn];
-    screenTile.tileColumn = selectedColumn;
-    screenTile.tileRow = selectedRow;
+    var screenTile = screenState[fullScreenRow][fullScreenColumn];
+    screenTile.tileColumn = tileColumn;
+    screenTile.tileRow = tileRow;
   }
   //This will update the pallette for everything in this section
   if(placePallette) {
-    updatePallette(tileRow, tileColumn);
+    updatePallette(fullScreenRow, fullScreenColumn, pallette);
   }
   else {
-    updateJustTile(tileRow, tileColumn);
+    updateJustTile(fullScreenRow, fullScreenColumn);
   }
-});
+}
 
 $('#fullScreenHighlightCanvas').mousemove('mouseover', function(e) {
   const position = getTileUnderCursor($(this)[0], e)  
@@ -583,14 +604,14 @@ document.getElementById('fullScreenHighlightCanvas').addEventListener('mouseout'
   highlightCurrentTile();//Clear the one that we set for hover over
 }, false);
 
-function updatePallette(row, column) {
+function updatePallette(row, column, pallette) {
   var startRow = getClosestPallette(row);
   var startColumn = getClosestPallette(column);
   
   for(var i = 0 ; i < NUM_TILES_PER_PALLETTE ; i++) {
     for(var j = 0 ; j < NUM_TILES_PER_PALLETTE ; j++) { 
       var screenTile = screenState[startRow + i][startColumn + j];
-      screenTile.pallette = currentPallette;
+      screenTile.pallette = pallette;
       fillScreenTile(startRow + i, startColumn + j, screenTile);
     }
   }
