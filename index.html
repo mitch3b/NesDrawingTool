@@ -104,6 +104,7 @@
           use a, s, d, w to fast change current tileset tile <br>
           use r and t to decrease and increase animation speed <br>
           hold shift when clicking tileset to copy the selected tile into the one you're clicking on <br>
+          ctl+z to undo <br>
         <br>
         </div>
         <table id="palletteTable" class="palletteTable">
@@ -167,8 +168,11 @@
       </div>
       <div id="animationCanvasDiv">
         <h3>Animation (coming soon)</h3>
+
         <canvas id="animationCanvas0"></canvas>
         <canvas id="animationCanvas1"></canvas>
+        <canvas id="animationCanvas2"></canvas>
+        <canvas id="animationCanvas3"></canvas>
         
         <label for="animations">Choose an amination:</label>
 
@@ -177,7 +181,12 @@
         
         <canvas id="animationDrawingCanvas0"></canvas>
         <canvas id="animationDrawingCanvas1"></canvas>
+        <canvas id="animationDrawingCanvas2"></canvas>
+        <canvas id="animationDrawingCanvas3"></canvas>
+        
       </div>
+              <button id="addAnimButton"> Add animation Frame </button>
+        <button id="removeAnimButton"> Remove animation Frame </button>
     </div>
     <div class="rightStuff">
       <div id="fullScreenCanvasDiv">

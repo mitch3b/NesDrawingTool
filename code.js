@@ -24,7 +24,7 @@ allAnimations.set(currentAnimation, Array(2).fill().map(() => Array(2).fill().ma
       pallette: 0
     })))));
     
-allAnimations.set("default2", Array(2).fill().map(() => Array(2).fill().map(() => Array(3)
+allAnimations.set("default2", Array(3).fill().map(() => Array(2).fill().map(() => Array(3)
   .fill().map(() => ({
       tileRow: 0,
       tileColumn: 1,
@@ -120,6 +120,7 @@ function init() {
     animationSelector.appendChild(optionElem);
   });
   
+  //TODO need to incorporate this to UNDO else undoing on an animation thats not up won't work and will be confusing
   animationSelector.options[1].selected = true;
   currentAnimation = animationSelecter.options[1].textContent;
   animation = allAnimations.get(currentAnimation);
@@ -137,15 +138,69 @@ function init() {
   $('#p0c0').click();
 }
 
+document.getElementById("addAnimButton").addEventListener("click", function() {
+  if(animation.length < 4) {
+    console.log("adding animation frame");
+        
+    undoStack.push({
+      funct: "removeAnimationFrame"
+    });
+    
+    var lastAnimCopy = animation[animation.length - 1].map(function(arr) {
+      return arr.slice();
+    });
+    
+    addAnimationFrame(lastAnimCopy);
+  }
+});
+
+
+document.getElementById("removeAnimButton").addEventListener("click", function() {
+  if(animation.length > 1) {
+    console.log("removing animation frame");
+    
+    undoStack.push({
+      funct: "addAnimationFrame",
+      animationData: animation[animation.length - 1]
+    });
+    
+    removeAnimationFrame();
+  }
+});
+
+function addAnimationFrame(animationData) {
+  animation.push(animationData);
+    
+  loadCurrentAnimation();
+}
+
+function removeAnimationFrame() {
+  animation.pop();
+  
+  loadCurrentAnimation();
+}
+
 function loadCurrentAnimation() {
+  //Hide everything by default
+  for(var i = 0 ; i < 4 ; i++) {
+    var animationCanvas = document.getElementById("animationCanvas" + i);
+    var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
+    
+    animationCanvas.hidden = true;
+    animationDrawingCanvas.hidden = true;
+  }
+  
   for(var i = 0 ; i < animation.length ; i++) {
     //TODO Should be creating these dynamically for when more are needed
+    
     var animationCanvas = document.getElementById("animationCanvas" + i);
     var animationDrawingCanvas = document.getElementById("animationDrawingCanvas" + i);
     animationCanvas.height = animation[i].length*TILE_WIDTH_PIXELS;
     animationCanvas.width = animation[i][0].length*TILE_HEIGHT_PIXELS;
     animationDrawingCanvas.height = animationCanvas.height;
     animationDrawingCanvas.width = animationCanvas.width;
+    animationCanvas.hidden = false;
+    animationDrawingCanvas.hidden = false;
     
     var ctx = animationCanvas.getContext('2d');
     var ctx2 = animationDrawingCanvas.getContext('2d');
@@ -156,12 +211,12 @@ function loadCurrentAnimation() {
         copyTileIntoAnimationCanvas(animationDrawingCanvas, j, k, animation[i][j][k].tileRow, animation[i][j][k].tileColumn, animation[i][j][k].pallette);
       }
     }
-   
   }
 }
 
 var currentTimeBetweenFrames;
 var timer;
+var animationCurrentlyShowing = 0;
 function setAnimationInterval(timeBetweenFrames) {
   currentTimeBetweenFrames = timeBetweenFrames
   
@@ -170,8 +225,13 @@ function setAnimationInterval(timeBetweenFrames) {
   }
   
   timer = setInterval(function() {
-    var animationCanvas = document.getElementById("animationCanvas0");
-    animationCanvas.style.zIndex = (animationCanvas.style.zIndex === "0") ? "1" : "0";
+    var animationCanvas = document.getElementById("animationCanvas" + animationCurrentlyShowing);
+    animationCanvas.style.zIndex = "0";
+    
+    animationCurrentlyShowing = (animationCurrentlyShowing + 1) % animation.length;
+    var animationCanvas = document.getElementById("animationCanvas" + animationCurrentlyShowing);
+    animationCanvas.style.zIndex = "1";
+    
   }, timeBetweenFrames);
 }
 
@@ -274,6 +334,8 @@ function undo(obj) {
     case "copyTileToTileset": copyTileToTileset(obj.sourceRow, obj.sourceColumn, obj.destRow, obj.destColumn); break;
     case "putTileIntoAnimation": putTileIntoAnimation(obj.animationNumber, obj.animRow, obj.animColumn, obj.tileRow, obj.tileColumn, obj.pallette); break;
     case "placeTileOnFullScreen": placeTileOnFullScreen(obj.placeTile, obj.placePallette, obj.tileRow, obj.tileColumn, obj.fullScreenRow, obj.fullScreenColumn, obj.pallette); break;
+    case "addAnimationFrame": addAnimationFrame(obj.animationData); break;
+    case "removeAnimationFrame": removeAnimationFrame(); break;
     default: console.log("ERROR: UNHANDLED UNDO FUNCTION: " + obj.funct);
   }
 }
