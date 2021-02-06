@@ -271,6 +271,9 @@ function undo(obj) {
   switch(obj.funct) {
     case "changePalletteColor": changePalletteColor(obj.palletteNum, obj.colorNum, obj.colorClass); break;
     case "changeTileColor": changeTileColor(obj.row, obj.column, obj.tileRow, obj.tileColumn, obj.colorNum); break;
+    case "copyTileToTileset": copyTileToTileset(obj.sourceRow, obj.sourceColumn, obj.destRow, obj.destColumn); break;
+    case "putTileIntoAnimation": putTileIntoAnimation(obj.animationNumber, obj.animRow, obj.animColumn, obj.tileRow, obj.tileColumn, obj.pallette); break;
+    default: console.log("ERROR: UNHANDLED UNDO FUNCTION: " + obj.funct);
   }
 }
 
@@ -383,7 +386,6 @@ function getTileUnderCursor(canvas, event) {
 }
 
 document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', function(e) {
-  //TODO stack
   const position = getTileUnderCursor($(this)[0], e)
   console.log("Clicked on tileset canvas tile: " + JSON.stringify(position));
   
@@ -392,23 +394,18 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', 
     
   // If holding shift
   if(pressedKeys[16]) {
-    console.log("Copying selected tile into highlighted tile...");
-    
-    var tileDataToCopy = tileSetState[selectedRow][selectedColumn].tileData;
-    var tileDestination = tileSetState[tileRow][tileColumn].tileData;
-          
-    for(var i = 0 ; i < tileDestination.length ; i++) {
-      for(var j = 0 ; j < tileDestination[i].length ; j++) {
-        tileDestination[i][j] = tileDataToCopy[i][j];
-      }
+    if(tileRow !== selectedRow || tileColumn !== selectedColumn) {
+      console.log("Copying selected tile into highlighted tile...");
+      
+      undoStack.push({
+        funct: "copyTileToTileset",
+        sourceRow: selectedRow,
+        sourceColumn: selectedColumn,
+        destTileData: destTileData //TODOm the copy part doesn't work bc data structs dont align anymore
+      });
+      
+      copyTileToTileset(selectedRow, selectedColumn, tileRow, tileColumn);
     }
-    
-    fillTilesetTile(tileRow, tileColumn, tileDestination, currentPallette);
-    
-    //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
-    initScreenCanvas();
-    
-    updatedTileForAnimation(tileRow, tileColumn);
   }
   else {
     console.log("load highlighted tile into the editor...");
@@ -421,6 +418,24 @@ document.getElementById('tilesetHighlightCanvas').addEventListener('mousedown', 
     loadCurrentTileIntoEditor();
   }
 })
+
+function copyTileToTileset(sourceRow, sourceColumn, destRow, destColumn) {
+  var tileDataToCopy = tileSetState[sourceRow][sourceColumn].tileData;
+  var tileDestination = tileSetState[destRow][destColumn].tileData;
+        
+  for(var i = 0 ; i < tileDestination.length ; i++) {
+    for(var j = 0 ; j < tileDestination[i].length ; j++) {
+      tileDestination[i][j] = tileDataToCopy[i][j];
+    }
+  }
+  
+  fillTilesetTile(destRow, destColumn, tileDestination, currentPallette);
+  
+  //TODO more efficient ways to redraw the screen. Consider using an event listener to subscribe to tiles, etc
+  initScreenCanvas();
+  
+  updatedTileForAnimation(destRow, destColumn);
+}
 
 $('#tilesetHighlightCanvas').mousemove('mouseover', function(e) {
   const position = getTileUnderCursor($(this)[0], e)
@@ -456,17 +471,35 @@ $('[id^="animationDrawingCanvas"]').mousedown(function(e) {
   const animColumn = position.tileColumn;
   const animRow = position.tileRow;
   
-  console.log("Setting animation " + animationNumber + " to row: " + animRow + " and column: " + animColumn);
-  
-  currentAnimation = animationSelecter.options[1].textContent;
-  animation[animationNumber][animRow][animColumn].tileRow = selectedRow;
-  animation[animationNumber][animRow][animColumn].tileColumn = selectedColumn;
-  animation[animationNumber][animRow][animColumn].pallette = currentPallette;
+  if(selectedRow !== animation[animationNumber][animRow][animColumn].tileRow ||
+     selectedColumn !== animation[animationNumber][animRow][animColumn].tileColumn || 
+     currentPallette !== animation[animationNumber][animRow][animColumn].pallette) {
+    console.log("Setting animation " + animationNumber + " to row: " + animRow + " and column: " + animColumn);
+    
+    undoStack.push({
+      funct: "putTileIntoAnimation",
+      animationNumber: animationNumber, 
+      animRow: animRow, 
+      animColumn: animColumn, 
+      tileRow: animation[animationNumber][animRow][animColumn].tileRow, 
+      tileColumn: animation[animationNumber][animRow][animColumn].tileColumn, 
+      pallette: animation[animationNumber][animRow][animColumn].pallette
+    });
 
-  copyTileIntoAnimationCanvas($(this)[0], animRow, animColumn, selectedRow, selectedColumn, currentPallette);
-  copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0], 
-    animRow, animColumn, selectedRow, selectedColumn, currentPallette);
+    putTileIntoAnimation(animationNumber, animRow, animColumn, selectedRow, selectedColumn, currentPallette)
+  }
 });
+
+function putTileIntoAnimation(animationNumber, animRow, animColumn, tileRow, tileColumn, pallette) {
+  animation[animationNumber][animRow][animColumn].tileRow = tileRow;
+  animation[animationNumber][animRow][animColumn].tileColumn = tileColumn;
+  animation[animationNumber][animRow][animColumn].pallette = pallette;
+
+  var canvas = $("#animationDrawingCanvas" + animationNumber)[0];
+  copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tileRow, tileColumn, pallette);
+  copyTileIntoAnimationCanvas($('#animationCanvas' + animationNumber)[0], 
+    animRow, animColumn, tileRow, tileColumn, pallette);
+}
 
 function copyTileIntoAnimationCanvas(canvas, animRow, animColumn, tilesetRow, tilesetColumn, pallette) {
   var tileData = tileSetState[tilesetRow][tilesetColumn].tileData
@@ -740,7 +773,7 @@ function changeTileColor(row, column, tileRow, tileColumn, colorNum) {
   var tileData = tileSetState[tileRow][tileColumn].tileData;    
   tileData[row][column] = colorNum;
     
-  //Color it (TODOm THIS is wrong)
+  //Color it
   var tileEditorTable = document.getElementById('tileEditorTable');
   updateColor(tileEditorTable.rows[row].cells[column].classList, colorClasses[currentPallette][colorNum]);
   
